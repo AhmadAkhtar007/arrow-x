@@ -1,0 +1,62 @@
+{
+  "admins": [
+    {
+      "id": "admin_super_01",
+      "username": "LivingLegend",
+      "email": "admin@arrowx.shop",
+      "name": "LivingLegend (Super Admin)",
+      "passwordHash": "$2b$10$RbfiSZqCkWrj9yDUg0FOJOdLaUj0VMstaWqddE8Z/EYiW.3aNxE2e",
+      "role": "superadmin",
+      "createdAt": "2026-08-11T06:59:09.529Z"
+    },
+    {
+      "id": "admin_1786442744800_m1gc6",
+      "username": "Rapz",
+      "passwordHash": "$2b$10$ZjuYuQXTzZOuuAC/4gohsef3RTOhf9gtGkDBfEXCthrkiEhNE69IW",
+      "role": "superadmin",
+      "createdAt": "2026-08-11T10:05:44.800Z"
+    },
+    {
+      "id": "admin_1786442785566_wymeg",
+      "username": "Mimester",
+      "passwordHash": "$2b$10$klwkt37HWe/vatpxoVIp1.xtNpJpf4yuYHbCRwPyLb0Pr3A4SpzPu",
+      "role": "superadmin",
+      "createdAt": "2026-08-11T10:06:25.566Z"
+    },
+    {
+      "id": "admin_1786442800650_ar2wg",
+      "username": "Gadhzii",
+      "passwordHash": "$2b$10$TpFGa0UP6Jbl8eQxrkKgpuHz916M5V1Sw65BxtbQgtkFpUV2Ux2ia",
+      "role": "superadmin",
+      "createdAt": "2026-08-11T10:06:40.650Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr_1786431553347_ld9qi",
+      "email": "customer_1786431551334@gmail.com",
+      "passwordHash": "$2b$10$hzspG.h500F1ieFrgzOeJumbs97dAknsij9.FlFW0Awt5FbDpX6QK",
+      "username": "customer_1786431551334",
+      "discordHandle": "pro_sniper_99",
+      "role": "customer",
+      "createdAt": "2026-08-11T06:59:13.347Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "AX-67572",
+      "customerEmail": "pro_gamer@gmail.com",
+      "discordHandle": "progamer#1337",
+      "gameName": "Valorant",
+      "planTier": "30-Day VIP",
+      "amount": 39.99,
+      "paymentMethod": "USDT (TRC20)",
+      "status": "Processed",
+      "createdAt": "Aug 11, 11:59 AM",
+      "updatedAt": "Just now",
+      "notes": "Updated by LivingLegend (Super Admin) at 11:59:18 AM",
+      "licenseKey": "AX-VAL-TEST-9988-VIP"
+    }
+  ],
+  "tickets": []
+}

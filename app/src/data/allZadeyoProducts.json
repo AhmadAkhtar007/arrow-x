@@ -1,0 +1,746 @@
+[
+    {
+        "id": "valorant-cheats",
+        "name": "Valorant",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://static-cdn.jtvnw.net/ttv-boxart/516575-600x900.jpg",
+        "heroImage": "https://static-cdn.jtvnw.net/ttv-boxart/516575-600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.49,
+            "week": 17.02,
+            "month": 41.18,
+            "lifetime": 101.56
+        },
+        "rating": 4.95,
+        "salesCount": 19850,
+        "isTopPick": true,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "fortnite-cheats",
+        "name": "Fortnite",
+        "category": "Battle Royale",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://static-cdn.jtvnw.net/ttv-boxart/33214-600x900.jpg",
+        "heroImage": "https://static-cdn.jtvnw.net/ttv-boxart/33214-600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.36,
+            "week": 16.62,
+            "month": 40.2,
+            "lifetime": 99.16
+        },
+        "rating": 4.93,
+        "salesCount": 18420,
+        "isTopPick": true,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "cs2-cheats",
+        "name": "CS2",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/730/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.99,
+            "week": 15.47,
+            "month": 37.42,
+            "lifetime": 92.31
+        },
+        "rating": 4.94,
+        "salesCount": 17650,
+        "isTopPick": true,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "pubg-cheats",
+        "name": "PUBG",
+        "category": "Battle Royale",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/578080/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.25,
+            "week": 16.28,
+            "month": 39.38,
+            "lifetime": 97.12
+        },
+        "rating": 4.91,
+        "salesCount": 16200,
+        "isTopPick": true,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "apex-legends-cheats",
+        "name": "Apex Legends",
+        "category": "Battle Royale",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/1172470/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.49,
+            "week": 17.02,
+            "month": 41.18,
+            "lifetime": 101.56
+        },
+        "rating": 4.92,
+        "salesCount": 15800,
+        "isTopPick": true,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "battlefield-cheats",
+        "name": "Battlefield",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1517290/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/1517290/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.12,
+            "week": 15.87,
+            "month": 38.4,
+            "lifetime": 94.72
+        },
+        "rating": 4.89,
+        "salesCount": 14300,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "dead-by-daylight-cheats",
+        "name": "Dead by Daylight (DBD)",
+        "category": "Survival",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/381210/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/381210/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.99,
+            "week": 15.47,
+            "month": 37.42,
+            "lifetime": 92.31
+        },
+        "rating": 4.9,
+        "salesCount": 13900,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "war-thunder-cheats",
+        "name": "War Thunder",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/236390/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/236390/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.36,
+            "week": 16.62,
+            "month": 40.2,
+            "lifetime": 99.16
+        },
+        "rating": 4.88,
+        "salesCount": 12700,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "escape-from-tarkov-cheats",
+        "name": "Escape from Tarkov (EFT)",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://static-cdn.jtvnw.net/ttv-boxart/491931-600x900.jpg",
+        "heroImage": "https://static-cdn.jtvnw.net/ttv-boxart/491931-600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 6.49,
+            "week": 20.12,
+            "month": 48.68,
+            "lifetime": 120.06
+        },
+        "rating": 4.96,
+        "salesCount": 12100,
+        "isTopPick": true,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "thefinals-cheats",
+        "name": "The Finals",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2073850/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/2073850/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.12,
+            "week": 15.87,
+            "month": 38.4,
+            "lifetime": 94.72
+        },
+        "rating": 4.89,
+        "salesCount": 11400,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "delta-force-cheats",
+        "name": "Delta Force",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2507950/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/2507950/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.36,
+            "week": 16.62,
+            "month": 40.2,
+            "lifetime": 99.16
+        },
+        "rating": 4.91,
+        "salesCount": 10800,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "dark-and-darker-cheats",
+        "name": "Dark and Darker",
+        "category": "Survival",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2016590/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/2016590/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.25,
+            "week": 16.28,
+            "month": 39.38,
+            "lifetime": 97.12
+        },
+        "rating": 4.9,
+        "salesCount": 9600,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "arc-raiders-cheats",
+        "name": "ARC Raiders",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/1808500/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/1808500/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.75,
+            "week": 17.82,
+            "month": 43.12,
+            "lifetime": 106.38
+        },
+        "rating": 4.94,
+        "salesCount": 8900,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "squad-cheats",
+        "name": "Squad",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/393380/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/393380/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.99,
+            "week": 15.47,
+            "month": 37.42,
+            "lifetime": 92.31
+        },
+        "rating": 4.88,
+        "salesCount": 8200,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "insurgency-sandstorm-cheats",
+        "name": "Insurgency: Sandstorm",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/581320/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/581320/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.99,
+            "week": 15.47,
+            "month": 37.42,
+            "lifetime": 92.31
+        },
+        "rating": 4.87,
+        "salesCount": 7600,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "battlebit-remastered-cheats",
+        "name": "BattleBit",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/671860/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/671860/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.49,
+            "week": 13.92,
+            "month": 33.68,
+            "lifetime": 83.06
+        },
+        "rating": 4.86,
+        "salesCount": 7100,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "unturned-cheats",
+        "name": "Unturned",
+        "category": "Survival",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/304930/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/304930/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 3.99,
+            "week": 12.37,
+            "month": 29.92,
+            "lifetime": 73.81
+        },
+        "rating": 4.85,
+        "salesCount": 6500,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "gray-zone-warfare-cheats",
+        "name": "Gray Zone Warfare",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2479810/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/2479810/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.75,
+            "week": 17.82,
+            "month": 43.12,
+            "lifetime": 106.38
+        },
+        "rating": 4.88,
+        "salesCount": 5900,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "escape-from-tarkov-arena-cheats",
+        "name": "EFT Arena",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://static-cdn.jtvnw.net/ttv-boxart/491931-600x900.jpg",
+        "heroImage": "https://static-cdn.jtvnw.net/ttv-boxart/491931-600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.99,
+            "week": 18.57,
+            "month": 44.92,
+            "lifetime": 110.81
+        },
+        "rating": 4.89,
+        "salesCount": 5300,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "abi-cheats",
+        "name": "ABI",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2073620/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/2073620/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.36,
+            "week": 16.62,
+            "month": 40.2,
+            "lifetime": 99.16
+        },
+        "rating": 4.9,
+        "salesCount": 4800,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "rogue-company-cheats",
+        "name": "Rogue Company",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/872200/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/872200/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.49,
+            "week": 13.92,
+            "month": 33.68,
+            "lifetime": 83.06
+        },
+        "rating": 4.84,
+        "salesCount": 4200,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "world-war-3-cheats",
+        "name": "World War 3 (WW3)",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/674020/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/674020/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.99,
+            "week": 15.47,
+            "month": 37.42,
+            "lifetime": 92.31
+        },
+        "rating": 4.83,
+        "salesCount": 3700,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "deadside-cheats",
+        "name": "Deadside",
+        "category": "Survival",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/895400/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/895400/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 4.49,
+            "week": 13.92,
+            "month": 33.68,
+            "lifetime": 83.06
+        },
+        "rating": 4.82,
+        "salesCount": 3100,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    },
+    {
+        "id": "marathon-cheats",
+        "name": "Marathon",
+        "category": "Shooter",
+        "tagline": "Kernel Ring-0 undetected driver, streamproof DirectX hook & automated 0s key dispatch.",
+        "image": "https://cdn.cloudflare.steamstatic.com/steam/apps/2444600/library_600x900.jpg",
+        "heroImage": "https://cdn.cloudflare.steamstatic.com/steam/apps/2444600/library_600x900.jpg",
+        "status": "Undetected",
+        "pricing": {
+            "day": 5.99,
+            "week": 18.57,
+            "month": 44.92,
+            "lifetime": 110.81
+        },
+        "rating": 4.95,
+        "salesCount": 2600,
+        "isTopPick": false,
+        "features": [
+            "Kernel-level ring0 driver architecture",
+            "Polymorphic mutated binary signature per key",
+            "Full 3D Bone ESP & Bounding Box Display",
+            "Smooth Vector Curve Aimbot with FOV Circle",
+            "100% Streamproof DirectX 11/12 Hook (OBS & Discord)"
+        ],
+        "compatibility": [
+            "Windows 10 (20H2-22H2)",
+            "Windows 11 (22H2-24H2)",
+            "Intel & AMD CPUs"
+        ],
+        "lastUpdated": "Today"
+    }
+]

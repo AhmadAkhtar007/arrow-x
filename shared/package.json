@@ -1,0 +1,13 @@
+{
+  "name": "@arrowx/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./catalog": "./src/catalog.ts",
+    "./orders": "./src/orders.ts"
+  },
+  "scripts": {
+    "test": "node --experimental-strip-types --test src/*.test.ts"
+  }
+}

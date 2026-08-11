@@ -140,7 +140,7 @@ export const catalog = [
   product('the-finals', 'The Finals', 'Shooter', [
     ['arcane', 'Arcane', [['1-day', '1 Day', 4.99], ['1-week', '1 Week', 22.99], ['1-month', '1 Month', 41.99]]],
   ]),
-] satisfies readonly CatalogProduct[];
+] as const satisfies readonly CatalogProduct[];
 
 export const findProduct = (productId: string) =>
   catalog.find((item) => item.id === productId);

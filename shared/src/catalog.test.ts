@@ -71,3 +71,37 @@ test('finds catalog entries and their starting prices by stable ids', () => {
   assert.equal(getStartingPrice('valorant'), 4.99);
   assert.equal(getStartingPrice('the-finals'), 4.99);
 });
+
+test('keeps canonical catalog data deeply immutable at runtime', () => {
+  const product = findProduct('valorant');
+  const variant = findVariant('valorant', 'avlon');
+  const offer = findOffer('valorant', 'avlon', '1-day');
+  assert.ok(product);
+  assert.ok(variant);
+  assert.ok(offer);
+
+  const originalPrice = offer.priceUsd;
+  const mutableOffer = offer as { priceUsd: number };
+  let mutationError: unknown;
+
+  try {
+    mutableOffer.priceUsd = 0;
+  } catch (error) {
+    mutationError = error;
+  }
+
+  const priceAfterMutation = mutableOffer.priceUsd;
+  if (!mutationError) mutableOffer.priceUsd = originalPrice;
+
+  assert.ok(mutationError instanceof TypeError);
+  assert.equal(priceAfterMutation, originalPrice);
+  assert.equal(findOffer('valorant', 'avlon', '1-day')?.priceUsd, originalPrice);
+  assert.ok(Object.isFrozen(catalog));
+  assert.ok(Object.isFrozen(product));
+  assert.ok(Object.isFrozen(product.features));
+  assert.ok(Object.isFrozen(product.compatibility));
+  assert.ok(Object.isFrozen(product.variants));
+  assert.ok(Object.isFrozen(variant));
+  assert.ok(Object.isFrozen(variant.offers));
+  assert.ok(Object.isFrozen(offer));
+});

@@ -7,28 +7,28 @@ export type CatalogCategory =
   | 'Accounts';
 
 export type PriceOffer = {
-  id: string;
-  label: string;
-  priceUsd: number;
+  readonly id: string;
+  readonly label: string;
+  readonly priceUsd: number;
 };
 
 export type ProductVariant = {
-  id: string;
-  name: string;
-  artwork: string;
-  offers: readonly PriceOffer[];
+  readonly id: string;
+  readonly name: string;
+  readonly artwork: string;
+  readonly offers: readonly PriceOffer[];
 };
 
 export type CatalogProduct = {
-  id: string;
-  name: string;
-  category: CatalogCategory;
-  description: string;
-  heroImage: string;
-  status: 'Undetected' | 'Updating' | 'Testing' | 'Available';
-  features: readonly string[];
-  compatibility: readonly string[];
-  variants: readonly ProductVariant[];
+  readonly id: string;
+  readonly name: string;
+  readonly category: CatalogCategory;
+  readonly description: string;
+  readonly heroImage: string;
+  readonly status: 'Undetected' | 'Updating' | 'Testing' | 'Available';
+  readonly features: readonly string[];
+  readonly compatibility: readonly string[];
+  readonly variants: readonly ProductVariant[];
 };
 
 type OfferInput = readonly [id: string, label: string, priceUsd: number];
@@ -59,7 +59,20 @@ const product = (
   })),
 });
 
-export const catalog = [
+const deepFreeze = <T>(value: T, seen = new WeakSet<object>()): T => {
+  if (value === null || typeof value !== 'object') return value;
+  if (seen.has(value)) return value;
+
+  seen.add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    deepFreeze(Reflect.get(value, key), seen);
+  }
+
+  Object.freeze(value);
+  return value;
+};
+
+export const catalog = deepFreeze([
   product('valorant', 'Valorant', 'Shooter', [
     ['avlon', 'Avlon', [['1-day', '1 Day', 9.99], ['1-week', '1 Week', 29.99], ['1-month', '1 Month', 59.99], ['1-year', '1 Year', 249.99]]],
     ['unlocker', 'Unlocker', [['1-day', '1 Day', 4.99], ['1-week', '1 Week', 14.99], ['1-month', '1 Month', 29.99]]],
@@ -140,7 +153,7 @@ export const catalog = [
   product('the-finals', 'The Finals', 'Shooter', [
     ['arcane', 'Arcane', [['1-day', '1 Day', 4.99], ['1-week', '1 Week', 22.99], ['1-month', '1 Month', 41.99]]],
   ]),
-] as const satisfies readonly CatalogProduct[];
+] as const satisfies readonly CatalogProduct[]);
 
 export const findProduct = (productId: string) =>
   catalog.find((item) => item.id === productId);

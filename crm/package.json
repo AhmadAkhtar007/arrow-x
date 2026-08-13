@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "test": "node --experimental-strip-types --test src/lib/*.test.mts",
     "dev": "next dev -p 3001",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start -p 3001",
     "lint": "next lint"
   },
   "dependencies": {
     "@arrowx/shared": "file:../shared",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/postcss": "^4.0.9",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.8",

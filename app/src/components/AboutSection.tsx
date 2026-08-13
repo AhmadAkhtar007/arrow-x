@@ -55,7 +55,7 @@ export const AboutSection: React.FC = () => {
             
             {/* Card 1 */}
             <div 
-              className="p-4 rounded-2xl bg-[#090f0c] border transition-all flex items-center gap-3.5 shadow-sm group hover:bg-[#0e1612]"
+              className="p-4 rounded-2xl bg-[#090f0c] border transition-all flex items-start sm:items-center gap-3.5 shadow-sm group hover:bg-[#0e1612]"
               style={{ borderColor: themeConfig.surfaceBorder }}
             >
               <div 
@@ -64,11 +64,11 @@ export const AboutSection: React.FC = () => {
               >
                 <Globe className="h-4 w-4" />
               </div>
-              <div>
-                <h4 className="text-sm font-bold font-display text-white">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm sm:text-base font-bold font-display text-white leading-tight text-wrap">
                   Worldwide Instant Key Delivery
                 </h4>
-                <p className="text-xs text-zinc-400 truncate">
+                <p className="mt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed whitespace-normal break-words">
                   Region-aware 0.0s license dispatch across 40+ countries.
                 </p>
               </div>
@@ -76,7 +76,7 @@ export const AboutSection: React.FC = () => {
 
             {/* Card 2 */}
             <div 
-              className="p-4 rounded-2xl bg-[#090f0c] border transition-all flex items-center gap-3.5 shadow-sm group hover:bg-[#0e1612]"
+              className="p-4 rounded-2xl bg-[#090f0c] border transition-all flex items-start sm:items-center gap-3.5 shadow-sm group hover:bg-[#0e1612]"
               style={{ borderColor: themeConfig.surfaceBorder }}
             >
               <div 
@@ -85,11 +85,11 @@ export const AboutSection: React.FC = () => {
               >
                 <Shield className="h-4 w-4" />
               </div>
-              <div>
-                <h4 className="text-sm font-bold font-display text-white">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm sm:text-base font-bold font-display text-white leading-tight text-wrap">
                   Consistency Over Hype
                 </h4>
-                <p className="text-xs text-zinc-400 truncate">
+                <p className="mt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed whitespace-normal break-words">
                   Rigorous anti-cheat regression testing before every game patch.
                 </p>
               </div>
@@ -97,7 +97,7 @@ export const AboutSection: React.FC = () => {
 
             {/* Card 3 */}
             <div 
-              className="p-4 rounded-2xl bg-[#090f0c] border transition-all flex items-center gap-3.5 shadow-sm group hover:bg-[#0e1612]"
+              className="p-4 rounded-2xl bg-[#090f0c] border transition-all flex items-start sm:items-center gap-3.5 shadow-sm group hover:bg-[#0e1612]"
               style={{ borderColor: themeConfig.surfaceBorder }}
             >
               <div 
@@ -106,11 +106,11 @@ export const AboutSection: React.FC = () => {
               >
                 <CheckCircle2 className="h-4 w-4" />
               </div>
-              <div>
-                <h4 className="text-sm font-bold font-display text-white">
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm sm:text-base font-bold font-display text-white leading-tight text-wrap">
                   24/7 Human Discord Support
                 </h4>
-                <p className="text-xs text-zinc-400 truncate">
+                <p className="mt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed whitespace-normal break-words">
                   Direct engineer ticketing with under 3-minute average response.
                 </p>
               </div>

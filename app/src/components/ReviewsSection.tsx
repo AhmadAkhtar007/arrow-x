@@ -8,43 +8,9 @@ import { useTheme } from '../context/ThemeContext';
 export const ReviewsSection: React.FC = () => {
   const { themeConfig } = useTheme();
 
-  const extendedReviews = [
-    ...reviewsData,
-    {
-      id: 'rev-6',
-      author: 'CyberPhantom',
-      avatarLetter: 'C',
-      rating: 5,
-      timeAgo: '1 day ago',
-      content: 'Undetected for 7 months straight on Vanguard. Direct ring-0 hook with zero input delay on 240Hz monitor.',
-      productName: 'VALORANT Pro',
-      verified: true
-    },
-    {
-      id: 'rev-7',
-      author: 'Vortex_EU',
-      avatarLetter: 'V',
-      rating: 5,
-      timeAgo: '3 days ago',
-      content: 'Bone ESP and loot radar in Tarkov are flawless. Extracted over 40M rubles without a single suspicious disconnect.',
-      productName: 'Escape from Tarkov Pro',
-      verified: true
-    },
-    {
-      id: 'rev-8',
-      author: 'Matteo_G',
-      avatarLetter: 'M',
-      rating: 5,
-      timeAgo: '4 days ago',
-      content: 'Permanent hardware spoofer unlocked my banned motherboard in one click. Support team is legendary.',
-      productName: 'ArrowX HWID Spoofer',
-      verified: true
-    }
-  ];
-
-  // Split into two alternating streams for dynamic dual-row ticker
-  const row1 = extendedReviews.slice(0, 4);
-  const row2 = extendedReviews.slice(4);
+  // Split all 20 unique reviews into two alternating rows of 10 for dynamic marquee tickers
+  const row1 = reviewsData.slice(0, 10);
+  const row2 = reviewsData.slice(10, 20);
 
   return (
     <section id="customer-feedback" className="py-16 relative overflow-hidden">
@@ -55,10 +21,10 @@ export const ReviewsSection: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-xs font-mono font-bold tracking-wider uppercase mb-1" style={{ color: themeConfig.accent }}>
               <MessageSquareQuote className="h-4 w-4" />
-              <span>COMMUNITY VERIFICATION & TESTIMONIALS</span>
+              <span>CUSTOMER REVIEWS</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black font-headline uppercase text-white">
-              Trusted by 26,000+ Players Worldwide
+              Trusted by Players Worldwide
             </h2>
           </div>
 
@@ -67,19 +33,17 @@ export const ReviewsSection: React.FC = () => {
               <Star className="h-4 w-4 fill-amber-400" />
               <span className="font-bold text-white text-sm">4.9 / 5.0</span>
             </div>
-            <span>·</span>
-            <span>1,605 Verified Feedbacks</span>
           </div>
         </div>
 
       </div>
 
-      {/* Dual Row Infinite Marquee Tickers */}
-      <div className="space-y-4 mask-marquee">
+      {/* Dual Row Infinite Marquee Tickers with comfortable human-readable reading pace */}
+      <div className="space-y-5 mask-marquee">
         
-        {/* Row 1: Left Scrolling Ticker */}
-        <div className="animate-marquee-left flex items-center gap-5">
-          {[...row1, ...row1, ...row1].map((review, idx) => (
+        {/* Row 1: Left Scrolling Ticker (Smooth, human-readable speed) */}
+        <div className="animate-marquee-left flex items-center gap-5 [animation-duration:200s]">
+          {[...row1, ...row1].map((review, idx) => (
             <div
               key={idx}
               className="w-[360px] sm:w-[420px] p-5 rounded-3xl bg-[#090e0b]/90 border border-white/10 hover:border-white/30 transition-all flex flex-col justify-between space-y-4 shadow-xl card-specular flex-shrink-0 cursor-default"
@@ -138,9 +102,9 @@ export const ReviewsSection: React.FC = () => {
           ))}
         </div>
 
-        {/* Row 2: Right Scrolling Ticker */}
-        <div className="animate-marquee-right flex items-center gap-5">
-          {[...row2, ...row2, ...row2].map((review, idx) => (
+        {/* Row 2: Right Scrolling Ticker (Smooth, human-readable speed) */}
+        <div className="animate-marquee-right flex items-center gap-5 [animation-duration:200s]">
+          {[...row2, ...row2].map((review, idx) => (
             <div
               key={idx}
               className="w-[360px] sm:w-[420px] p-5 rounded-3xl bg-[#090e0b]/90 border border-white/10 hover:border-white/30 transition-all flex flex-col justify-between space-y-4 shadow-xl card-specular flex-shrink-0 cursor-default"

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   Key, 
@@ -25,6 +26,7 @@ import { RealOrder, RealSupportTicket } from '../lib/types';
 import { ArrowXLogo } from '../components/ArrowXLogo';
 
 export default function CustomerDashboardPage() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -36,7 +38,6 @@ export default function CustomerDashboardPage() {
   // Ticket Modal States
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [ticketSubject, setTicketSubject] = useState('');
-  const [ticketCategory, setTicketCategory] = useState<'HWID Reset' | 'Key Issue' | 'Injection Error' | 'General Question'>('HWID Reset');
   const [ticketMessage, setTicketMessage] = useState('');
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [ticketSubmitting, setTicketSubmitting] = useState(false);
@@ -72,6 +73,9 @@ export default function CustomerDashboardPage() {
           if (tckData.success && tckData.tickets) {
             setTickets(tckData.tickets);
           }
+        } else if (authData.authenticated && (authData.user.role === 'admin' || authData.user.role === 'superadmin')) {
+          router.replace('/admin');
+          return;
         } else {
           setCurrentUser(null);
         }
@@ -83,7 +87,7 @@ export default function CustomerDashboardPage() {
     };
 
     fetchCustomerData();
-  }, []);
+  }, [router]);
 
   const handleCopyKey = (key: string, orderId: string) => {
     navigator.clipboard.writeText(key);
@@ -106,7 +110,6 @@ export default function CustomerDashboardPage() {
           customerEmail: currentUser.email,
           customerName: currentUser.name || currentUser.username,
           discordHandle: currentUser.discordHandle,
-          category: ticketCategory,
           subject: ticketSubject.trim(),
           initialMessage: ticketMessage.trim(),
         }),
@@ -172,7 +175,7 @@ export default function CustomerDashboardPage() {
           </div>
 
           <div className="text-[11px] font-mono text-zinc-500">
-            Zero password friction. Instant 6-digit verification code.
+            Zero password friction. Instant verification code.
           </div>
         </div>
       </div>
@@ -234,7 +237,7 @@ export default function CustomerDashboardPage() {
 
         <div className="p-5 rounded-2xl bg-[#080d0a]/90 border border-white/10 space-y-1">
           <div className="text-xs text-zinc-400 flex items-center justify-between">
-            <span>Hardware Lock (HWID)</span>
+            <span>Account Security</span>
             <ShieldCheck className="h-4 w-4 text-teal-400" />
           </div>
           <div className="text-xs font-bold text-emerald-400 pt-1">Registered & Protected</div>
@@ -282,26 +285,44 @@ export default function CustomerDashboardPage() {
                     </div>
                   </div>
 
-                  <span 
-                    className={`text-[11px] px-3 py-1 rounded-full font-mono font-bold border flex items-center gap-1.5 ${
-                      ord.status === 'Completed'
-                        ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
-                        : 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                    }`}
-                  >
-                    {ord.status === 'Completed' ? (
-                      <>
-                        <CheckCircle2 className="h-3 w-3" />
-                        <span>Active</span>
-                      </>
-                    ) : (
-                      <>
-                        <Clock className="h-3 w-3 animate-spin" />
-                        <span>Fulfilling</span>
-                      </>
-                    )}
-                  </span>
+                  <div className="flex flex-col items-end gap-1.5 font-mono text-[10px]">
+                    <span 
+                      className={`px-2.5 py-0.5 rounded-full font-bold border flex items-center gap-1 ${
+                        ord.paymentStatus === 'VERIFIED'
+                          ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                          : ord.paymentStatus === 'REJECTED'
+                          ? 'bg-rose-500/15 border-rose-500/40 text-rose-400'
+                          : 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                      }`}
+                    >
+                      {ord.paymentStatus === 'VERIFIED' ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3" />
+                          <span>Payment Verified</span>
+                        </>
+                      ) : ord.paymentStatus === 'REJECTED' ? (
+                        <span>Payment Rejected</span>
+                      ) : (
+                        <>
+                          <Clock className="h-3 w-3 animate-spin" />
+                          <span>Verifying Payment</span>
+                        </>
+                      )}
+                    </span>
+
+                    <span className="text-zinc-500">
+                      {ord.fulfillmentStatus === 'DISPATCHED' ? 'Delivered' :
+                       ord.fulfillmentStatus === 'CLAIMED' ? 'In Fulfillment' : 'Pending Review'}
+                    </span>
+                  </div>
                 </div>
+
+                {/* Rejection notice if payment rejected */}
+                {ord.paymentStatus === 'REJECTED' && ord.rejectionReason && (
+                  <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono">
+                    <span className="font-bold">Staff Note:</span> {ord.rejectionReason}
+                  </div>
+                )}
 
                 {/* License Key Box */}
                 {ord.licenseKey ? (
@@ -311,23 +332,34 @@ export default function CustomerDashboardPage() {
                       <span>Assigned License Key:</span>
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-[#050b07] border border-emerald-500/40 flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs font-bold text-white tracking-wider truncate">
-                        {ord.licenseKey}
-                      </span>
+                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-black/80 border border-emerald-500/30 font-mono text-xs text-emerald-300">
+                      <span className="flex-1 truncate select-all">{ord.licenseKey}</span>
                       <button
                         onClick={() => handleCopyKey(ord.licenseKey!, ord.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold transition-all cursor-pointer flex-shrink-0 shadow-md"
+                        className="px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0"
                       >
-                        <Copy className="h-3 w-3" />
-                        <span>{copiedKeyId === ord.id ? 'Copied' : 'Copy'}</span>
+                        {copiedKeyId === ord.id ? (
+                          <>
+                            <CheckCircle2 className="h-3 w-3" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono flex items-center gap-2">
                     <Clock className="h-4 w-4 animate-spin flex-shrink-0" />
-                    <span>Allocating key from provider. Ready shortly.</span>
+                    <span>
+                      {ord.paymentStatus === 'VERIFIED'
+                        ? 'Staff is allocating your license key. Ready shortly.'
+                        : 'Manual review in progress. Key will be dispatched once verified.'}
+                    </span>
                   </div>
                 )}
 
@@ -380,7 +412,6 @@ export default function CustomerDashboardPage() {
                 <div className="flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-white">{tck.id}</span>
-                    <span className="text-zinc-500">• {tck.category}</span>
                   </div>
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                     tck.status === 'Open' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'
@@ -414,17 +445,11 @@ export default function CustomerDashboardPage() {
             className="w-full max-w-lg bg-[#080d0a] border border-emerald-500/30 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <div className="flex items-center border-b border-white/10 pb-3">
               <div className="flex items-center gap-2 text-emerald-400 font-bold font-display">
                 <MessageSquare className="h-5 w-5" />
                 <span>Create Support Request</span>
               </div>
-              <button 
-                onClick={() => setShowTicketModal(false)}
-                className="text-zinc-400 hover:text-white font-mono text-xs cursor-pointer"
-              >
-                Close
-              </button>
             </div>
 
             {ticketSuccess ? (
@@ -453,26 +478,12 @@ export default function CustomerDashboardPage() {
                 )}
 
                 <div>
-                  <label className="block text-zinc-400 mb-1">Inquiry Category</label>
-                  <select
-                    value={ticketCategory}
-                    onChange={(e) => setTicketCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-emerald-500 cursor-pointer"
-                  >
-                    <option value="HWID Reset">HWID Reset (Hardware / SSD Upgrade)</option>
-                    <option value="Key Issue">License Key / Activation Issue</option>
-                    <option value="Injection Error">UEFI / Driver Troubleshooting</option>
-                    <option value="General Question">General Question</option>
-                  </select>
-                </div>
-
-                <div>
                   <label className="block text-zinc-400 mb-1">Subject</label>
                   <input
                     type="text"
                     value={ticketSubject}
                     onChange={(e) => setTicketSubject(e.target.value)}
-                    placeholder="e.g. Upgraded SSD, need HWID reset"
+                    placeholder="What is your question?"
                     className="w-full p-2.5 rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-emerald-500 font-sans"
                     required
                   />

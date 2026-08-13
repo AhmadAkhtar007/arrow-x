@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '../../../lib/auth';
 import { getTickets, createTicket } from '../../../lib/db';
+import { parseSupportRequest } from '../../../lib/supportRequest';
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,24 +36,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { orderId, customerEmail, discordHandle, category, subject, initialMessage } = body;
-
-    if (!customerEmail || !subject || !initialMessage) {
-      return NextResponse.json({ error: 'Email, subject, and message are required.' }, { status: 400 });
-    }
-
-    const newTicket = await createTicket({
-      orderId,
-      customerEmail,
-      discordHandle,
-      category: category || 'General Question',
-      subject,
-      initialMessage,
-    });
+    const newTicket = await createTicket(parseSupportRequest(await req.json()));
 
     return NextResponse.json({ success: true, ticket: newTicket }, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to submit ticket.' }, { status: 500 });
+    const message = error.message || 'Failed to submit ticket.';
+    return NextResponse.json({ error: message }, { status: message === 'Email, subject, and message are required.' ? 400 : 500 });
   }
 }

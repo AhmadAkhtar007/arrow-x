@@ -7,6 +7,7 @@ import {
   updateCustomerProfile, 
   initializeDatabase 
 } from '../../../../lib/db';
+import { parseCustomerProfileUpdate } from '../../../../lib/profileUpdate';
 
 export async function PUT(req: NextRequest) {
   try {
@@ -87,10 +88,11 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
     }
 
+    const customerUpdate = parseCustomerProfileUpdate(body);
     const updatedUser = await updateCustomerProfile(user.id, {
-      name: name || user.name,
-      username: username || user.username,
-      discordHandle: discordHandle !== undefined ? discordHandle : user.discordHandle,
+      name: customerUpdate.name || user.name,
+      username: customerUpdate.username || user.username,
+      discordHandle: customerUpdate.discordHandle !== undefined ? customerUpdate.discordHandle : user.discordHandle,
     });
 
     if (!updatedUser) {

@@ -35,7 +35,6 @@ export interface SupportTicket {
   orderId?: string;
   customerEmail: string;
   subject: string;
-  category: 'HWID Reset' | 'Key Issue' | 'Injection Error' | 'General Question';
   priority: TicketPriority;
   status: TicketStatus;
   createdAt: string;

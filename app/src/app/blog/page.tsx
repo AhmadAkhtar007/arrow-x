@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Terminal, ArrowRight, Clock, Search, Code, Bell } from 'lucide-react';
+import { Sparkles, ArrowRight, Clock, Search, ShieldCheck, Zap, HeartHandshake, Bell, BookOpen } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { announcementsData } from '../../data/mockData';
 
@@ -12,56 +12,82 @@ export default function BlogPage() {
   const [subscribed, setSubscribed] = useState(false);
   const [subEmail, setSubEmail] = useState('');
 
-  const tags = ['All', 'Patch Notes', 'Security Intel', 'Kernel Architecture', 'Driver Telemetry'];
+  const tags = ['All', 'Competitive Edge', 'Player Safety', 'Gameplay Guides', 'Product Experience', 'Community & Support'];
 
-  const extendedArticles = [
-    ...announcementsData,
+  const articles = [
+    {
+      id: 'post-1',
+      title: 'The Competitive Advantage: Why Top Players Value Peace of Mind Over Raw Speed',
+      date: 'August 12, 2026',
+      category: 'Competitive Edge',
+      readTime: '3 min read',
+      author: 'ArrowX Gaming Team',
+      summary: 'Climbing ranked ladders should feel exciting, not stressful. Learn how smooth, natural gameplay tracking and reliable protection give competitive players the mental clarity needed to clutch high-stakes matches.',
+      highlight: {
+        icon: Sparkles,
+        title: 'Zero Latency & 0 FPS Drop',
+        text: 'Engineered specifically for high-refresh 240Hz/360Hz monitors, running invisibly in the background without frame dips or mouse jitter.'
+      }
+    },
+    {
+      id: 'post-2',
+      title: 'Zero Downtime Philosophy: What Happens Behind the Scenes When Games Push Big Updates',
+      date: 'August 8, 2026',
+      category: 'Player Safety',
+      readTime: '4 min read',
+      author: 'Security Telemetry Desk',
+      summary: 'Surprise game patches can ruin game nights for unprepared players. Explore how our automated over-the-air update network protects your active sessions with seamless, instant calibrations.',
+      highlight: {
+        icon: ShieldCheck,
+        title: 'Automated Over-The-Air Upgrades',
+        text: 'Offsets update silently in the cloud so you can relaunch your game immediately with zero manual downloads or reinstalls.'
+      }
+    },
     {
       id: 'post-3',
-      title: 'Deep Dive: How Kernel Ring-0 Obfuscation Bypasses Heuristic Memory Scanners',
-      date: 'Aug 04, 2026',
-      category: 'Kernel Architecture',
-      readTime: '6 min read',
-      author: 'Aris (Lead Kernel Dev)',
-      summary: 'A technical analysis of modern game anti-cheat drivers (Vanguard, EAC) and how ArrowX utilizes mutated syscall offsets and hypervisor virtualization to remain completely transparent.',
-      contentSnippet: `// Kernel Syscall Virtualization Hook Sample
-NTSTATUS InitializeHypervisorVirtualization() {
-    CR0_REGISTER cr0 = ReadCR0();
-    cr0.WriteProtect = 0;
-    WriteCR0(cr0);
-    MutateDriverSignatures();
-    return STATUS_SUCCESS;
-}`
+      title: 'From Solo Queue to Champion: Building Unshakable In-Game Awareness',
+      date: 'August 3, 2026',
+      category: 'Gameplay Guides',
+      readTime: '3 min read',
+      author: 'Tactical Coaching Staff',
+      summary: 'Chaotic teamfights and unexpected flanks make solo queues frustrating. Discover how clean, stream-proof visual enhancements help you anticipate enemy rotations with complete confidence.',
+      highlight: {
+        icon: Zap,
+        title: '100% Streamproof Clarity',
+        text: 'Enjoy crystal-clear awareness that remains completely hidden from OBS, Discord screenshares, and video recordings.'
+      }
     },
     {
       id: 'post-4',
-      title: 'Ricochet Warzone 4.0 Client Update: Full Telemetry Report & Loader Status',
-      date: 'Jul 29, 2026',
-      category: 'Security Intel',
-      readTime: '4 min read',
-      author: 'Wolfy (Security Analyst)',
-      summary: 'Following Call of Duty Warzone Season update, our telemetry team analyzed client integrity checks and deployed zero-delay polymorphic patches for all active subscribers.',
-      contentSnippet: `[RICHOCHET-SCANNER] Integrity Check: PASSED (0 Flags)
-[RING0-DRIVER] Hook Status: Active / Memory Obfuscated
-[LATENCY] Injection Overhead: 0.12ms`
+      title: 'The 90-Second Setup: How We Built the World’s Cleanest Game Enhancement Dashboard',
+      date: 'July 28, 2026',
+      category: 'Product Experience',
+      readTime: '2 min read',
+      author: 'Product Experience Team',
+      summary: 'We eliminated confusing password forms, BIOS headaches, and complex config files. Here is how our modern OTP customer vault delivers instant activation in under two minutes.',
+      highlight: {
+        icon: Sparkles,
+        title: 'Frictionless Activation',
+        text: 'Sign in with your email OTP, access your private license key instantly, and launch straight into your favorite game.'
+      }
     },
     {
       id: 'post-5',
-      title: 'Hardware Serialization Spoofing: Complete Breakdown of SMBIOS & Disk UUID Emulation',
-      date: 'Jul 21, 2026',
-      category: 'Driver Telemetry',
-      readTime: '5 min read',
-      author: 'Aris (Lead Kernel Dev)',
-      summary: 'How ArrowX Spoofers dynamically intercept IRP read requests for disk serial numbers, NIC MAC addresses, and motherboard UUIDs to provide permanent hardware unbans.',
-      contentSnippet: `// Intercept Disk Serial Query
-VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
-    PIO_STACK_LOCATION stack = IoGetCurrentIrpStackLocation(Irp);
-    SpoofHardwareDescriptors(stack->Parameters.DeviceIoControl.Type3InputBuffer);
-}`
+      title: '24/7 Human Engineering Desk: Why Instant Support is the Secret Behind 26,000+ Happy Players',
+      date: 'July 20, 2026',
+      category: 'Community & Support',
+      readTime: '3 min read',
+      author: 'Customer Operations',
+      summary: 'Great software is only half the story. Learn how our dedicated support team resolves tickets in under four minutes to guarantee you are never left waiting when you want to play.',
+      highlight: {
+        icon: HeartHandshake,
+        title: 'Average Response Time: <4 Minutes',
+        text: 'Direct communication with dedicated engineers through your personal dashboard tickets and private Discord community.'
+      }
     }
   ];
 
-  const filteredArticles = extendedArticles.filter((art) => {
+  const filteredArticles = articles.filter((art) => {
     const matchesTag = selectedTag === 'All' || art.category === selectedTag;
     const matchesSearch = 
       art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -78,7 +104,7 @@ VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
   return (
     <div className="pt-24 pb-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
       
-      {/* Blog & Patch Notes Hero */}
+      {/* Blog Hero Stage */}
       <div className="relative p-6 sm:p-10 rounded-3xl bg-gradient-to-br from-[#0b120e] via-[#070c09] to-[#040705] border border-white/10 overflow-hidden shadow-2xl space-y-3">
         <div 
           className="absolute -top-24 -right-24 w-80 h-80 rounded-full blur-[140px] pointer-events-none opacity-20"
@@ -86,16 +112,16 @@ VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
         />
 
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-xs font-mono">
-          <Terminal className="h-3.5 w-3.5" style={{ color: themeConfig.accent }} />
-          <span className="text-zinc-300">Engineering Changelogs & Briefs</span>
+          <BookOpen className="h-3.5 w-3.5" style={{ color: themeConfig.accent }} />
+          <span className="text-zinc-300">INSIGHTS, GUIDES & UPDATES</span>
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
-          Security Intel & Patch Notes
+        <h1 className="text-3xl sm:text-5xl font-black font-display tracking-tight text-white uppercase">
+          ArrowX Journal & Guides
         </h1>
 
-        <p className="text-sm text-zinc-400 max-w-xl leading-relaxed font-sans">
-          Technical engineering briefs, kernel driver telemetry, and anti-cheat update logs published directly by our reverse-engineering team.
+        <p className="text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed font-sans">
+          Insights on competitive gaming awareness, automated account protection, and maximizing your performance across all major titles.
         </p>
       </div>
 
@@ -108,7 +134,7 @@ VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search patch notes, syscall updates, or bypass logs..."
+            placeholder="Search guides, setup tips, and updates..."
             className="w-full pl-10 pr-4 py-2 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs focus:outline-none focus:border-white/30"
           />
         </div>
@@ -138,76 +164,84 @@ VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
 
       {/* Articles Feed */}
       <div className="space-y-6">
-        {filteredArticles.map((article: any) => (
-          <article
-            key={article.id}
-            className="p-6 sm:p-8 rounded-3xl bg-[#090e0b]/90 border border-white/10 hover:border-white/20 transition-all backdrop-blur-xl shadow-xl space-y-4 group"
-            style={{ borderColor: themeConfig.surfaceBorder }}
-          >
-            {/* Meta Strip */}
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-              <div className="flex items-center gap-3">
-                <span 
-                  className="px-2.5 py-0.5 rounded-full border text-[11px] font-semibold"
+        {filteredArticles.map((article) => {
+          const HighlightIcon = article.highlight.icon;
+          return (
+            <article
+              key={article.id}
+              className="p-6 sm:p-8 rounded-3xl bg-[#090e0b]/90 border border-white/10 hover:border-white/20 transition-all backdrop-blur-xl shadow-xl space-y-5 group"
+              style={{ borderColor: themeConfig.surfaceBorder }}
+            >
+              {/* Meta Strip */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="px-3 py-0.5 rounded-full border text-[11px] font-semibold"
+                    style={{ backgroundColor: themeConfig.badgeBg, borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}
+                  >
+                    {article.category}
+                  </span>
+                  <span className="text-zinc-500">{article.date}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-zinc-500">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{article.readTime}</span>
+                </div>
+              </div>
+
+              {/* Title & Summary */}
+              <div className="space-y-2">
+                <h2 className="text-xl sm:text-2xl font-bold font-display text-white group-hover:text-emerald-400 transition-colors leading-snug">
+                  {article.title}
+                </h2>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans">
+                  {article.summary}
+                </p>
+              </div>
+
+              {/* Soft Marketing Highlight Card */}
+              <div className="p-4 rounded-2xl bg-black/60 border border-white/10 flex items-start gap-3.5">
+                <div 
+                  className="w-8 h-8 rounded-xl border flex items-center justify-center flex-shrink-0 mt-0.5"
                   style={{ backgroundColor: themeConfig.badgeBg, borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}
                 >
-                  {article.category}
-                </span>
-                <span className="text-zinc-500">{article.date}</span>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-zinc-500">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{article.readTime}</span>
-              </div>
-            </div>
-
-            {/* Title & Summary */}
-            <div className="space-y-2">
-              <h2 className="text-xl sm:text-2xl font-bold font-display text-white group-hover:text-emerald-400 transition-colors">
-                {article.title}
-              </h2>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans">
-                {article.summary}
-              </p>
-            </div>
-
-            {/* Code Snippet if present */}
-            {article.contentSnippet && (
-              <div className="p-4 rounded-xl bg-black/70 border border-white/10 font-mono text-[11px] text-emerald-400 overflow-x-auto">
-                <div className="flex items-center gap-2 text-zinc-500 text-[10px] pb-2 mb-2 border-b border-white/5 uppercase">
-                  <Code className="h-3 w-3" />
-                  <span>Verified Kernel Implementation</span>
+                  <HighlightIcon className="h-4 w-4" />
                 </div>
-                <pre>
-                  <code>{article.contentSnippet}</code>
-                </pre>
-              </div>
-            )}
-
-            {/* Author and Action */}
-            <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
-              <div className="text-zinc-500 font-mono">
-                Author: <span className="text-zinc-300">{article.author || 'ArrowX Kernel Team'}</span>
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-white font-display">
+                    {article.highlight.title}
+                  </div>
+                  <p className="text-[11px] text-zinc-400 font-sans leading-relaxed">
+                    {article.highlight.text}
+                  </p>
+                </div>
               </div>
 
-              <a
-                href="https://discord.gg/sMHzvy2QYT"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 font-semibold transition-transform group-hover:translate-x-1"
-                style={{ color: themeConfig.accent }}
-              >
-                <span>Discuss on Discord</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            </div>
+              {/* Author and Action */}
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                <div className="text-zinc-500 font-mono">
+                  Published by <span className="text-zinc-300">{article.author}</span>
+                </div>
 
-          </article>
-        ))}
+                <a
+                  href="https://discord.gg/sMHzvy2QYT"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 font-semibold transition-transform group-hover:translate-x-1"
+                  style={{ color: themeConfig.accent }}
+                >
+                  <span>Join Community Discussion</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </div>
+
+            </article>
+          );
+        })}
       </div>
 
-      {/* Telegram / Patch Alert Subscription Banner */}
+      {/* Newsletter & Community Subscription Banner */}
       <div 
         className="p-6 sm:p-8 rounded-3xl border bg-gradient-to-r from-[#0d1612] via-[#090e0b] to-[#040705] flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left"
         style={{ borderColor: themeConfig.surfaceBorder }}
@@ -215,19 +249,19 @@ VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
         <div className="space-y-1 max-w-md">
           <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-mono" style={{ color: themeConfig.accent }}>
             <Bell className="h-3.5 w-3.5" />
-            <span>INSTANT PATCH TELEMETRY</span>
+            <span>VIP PLAYER ALERTS</span>
           </div>
           <h3 className="text-xl font-bold font-display text-white">
-            Receive Instant Anti-Cheat Update Alerts
+            Stay Ahead on Game Patches & Strategies
           </h3>
           <p className="text-xs text-zinc-400">
-            Get notified within seconds when Vanguard, EAC, or BattlEye deploy client memory updates.
+            Receive instant notifications when games update and discover fresh tactical gameplay guides.
           </p>
         </div>
 
         {subscribed ? (
           <div className="px-5 py-3 rounded-xl border font-mono text-xs font-bold" style={{ backgroundColor: themeConfig.badgeBg, borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}>
-            Successfully Subscribed to Patch Feeds
+            Successfully Subscribed to Player Alerts
           </div>
         ) : (
           <form onSubmit={handleSubscribe} className="flex w-full sm:w-auto gap-2">
@@ -241,7 +275,7 @@ VOID HookDiskDriveIRP(PDEVICE_OBJECT DeviceObject, PIRP Irp) {
             />
             <button
               type="submit"
-              className="px-4 py-2.5 rounded-xl text-xs font-bold font-display uppercase tracking-wider transition-all cursor-pointer hover:scale-105"
+              className="px-5 py-2.5 rounded-xl text-xs font-bold font-display uppercase tracking-wider transition-all cursor-pointer hover:scale-105"
               style={{ backgroundColor: themeConfig.buttonBg, color: themeConfig.buttonText }}
             >
               Subscribe

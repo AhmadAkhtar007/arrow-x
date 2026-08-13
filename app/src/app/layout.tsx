@@ -50,10 +50,10 @@ export const metadata: Metadata = {
     description: 'Precision-engineered undetected Ring-0 cheats for Valorant, CS2, Fortnite, Apex Legends, EFT, ARC Raiders, and 24+ titles with instant automated key delivery.',
     images: [
       {
-        url: '/assets/logo-green.png',
-        width: 800,
-        height: 600,
-        alt: 'ArrowX Security Logo',
+        url: '/assets/arrowx-social-preview.png',
+        width: 1200,
+        height: 630,
+        alt: 'ArrowX — Play to win',
       },
     ],
   },
@@ -61,11 +61,11 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ArrowX | Undetected Game Cheats & Ring-0 Enhancements',
     description: 'Precision-engineered undetected Ring-0 cheats for Valorant, CS2, Fortnite, and 24+ titles with instant 0s delivery.',
-    images: ['/assets/logo-green.png'],
+    images: ['/assets/arrowx-social-preview.png'],
   },
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
+    icon: '/assets/logo-green.png',
+    shortcut: '/assets/logo-green.png',
     apple: '/assets/logo-green.png',
   },
   robots: {

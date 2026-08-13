@@ -170,3 +170,27 @@ export const getStartingPrice = (productId: string) => {
 
   return Math.min(...product.variants.flatMap((variant) => variant.offers.map((offer) => offer.priceUsd)));
 };
+
+export const searchCatalog = (query: string): readonly CatalogProduct[] => {
+  const normalized = query.trim().toLocaleLowerCase();
+  if (!normalized) return catalog;
+
+  return catalog.filter((item) =>
+    item.name.toLocaleLowerCase().includes(normalized) ||
+    item.description.toLocaleLowerCase().includes(normalized) ||
+    item.variants.some((variant) => variant.name.toLocaleLowerCase().includes(normalized)),
+  );
+};
+
+export const getOfferSummary = (productId: string) => {
+  const prices = findProduct(productId)?.variants.flatMap((variant) =>
+    variant.offers.map((offer) => offer.priceUsd),
+  ) ?? [];
+  if (!prices.length) return undefined;
+  return {
+    lowPrice: Math.min(...prices),
+    highPrice: Math.max(...prices),
+    offerCount: prices.length,
+  };
+};
+

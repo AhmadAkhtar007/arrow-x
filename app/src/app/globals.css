@@ -215,7 +215,6 @@
 }
 
 .animate-marquee-left:hover,
-.animate-marquee-game-ticker:hover,
 .animate-marquee-left-fast:hover,
 .animate-marquee-right:hover {
   animation-play-state: paused;
@@ -225,6 +224,11 @@
 .mask-marquee {
   mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.mask-marquee-cinematic {
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.2) 5%, black 18%, black 82%, rgba(0, 0, 0, 0.2) 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.2) 5%, black 18%, black 82%, rgba(0, 0, 0, 0.2) 95%, transparent 100%);
 }
 
 /* Custom Scrollbars */

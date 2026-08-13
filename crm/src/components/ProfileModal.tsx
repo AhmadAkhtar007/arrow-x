@@ -44,12 +44,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     setError('');
     setSuccess(false);
 
-    if (newPassword && newPassword !== confirmPassword) {
+    if (isAdmin && newPassword && newPassword !== confirmPassword) {
       setError('New passwords do not match.');
       return;
     }
 
-    if (newPassword && !currentPassword) {
+    if (isAdmin && newPassword && !currentPassword) {
       setError('Please provide your current password to set a new password.');
       return;
     }
@@ -64,8 +64,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           username: username.trim(),
           name: isAdmin ? name.trim() : undefined,
           discordHandle: !isAdmin ? discordHandle.trim() : undefined,
-          currentPassword: currentPassword || undefined,
-          newPassword: newPassword || undefined,
+          currentPassword: isAdmin ? currentPassword || undefined : undefined,
+          newPassword: isAdmin ? newPassword || undefined : undefined,
         }),
       });
 
@@ -126,7 +126,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               <User className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold font-display text-white">Account Settings & Security</h2>
+              <h2 className="text-lg font-bold font-display text-white">{isAdmin ? 'Account Settings & Security' : 'Profile Settings'}</h2>
               <p className="text-xs text-zinc-400 font-mono">
                 {currentUser.email} • <span className="capitalize">{currentUser.role}</span>
               </p>
@@ -147,7 +147,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             isAdmin ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
           }`}>
             <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-            <span>Profile and credentials updated successfully!</span>
+            <span>{isAdmin ? 'Profile and credentials updated successfully!' : 'Profile updated successfully!'}</span>
           </div>
         )}
 
@@ -207,8 +207,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             </div>
           )}
 
-          {/* Password Change Section */}
-          <div className="pt-3 border-t border-white/10 space-y-3">
+          {/* Password Change Section (admin accounts only) */}
+          {isAdmin && <div className="pt-3 border-t border-white/10 space-y-3">
             <div className="text-zinc-400 font-bold flex items-center gap-1.5">
               <Key className="h-3.5 w-3.5" />
               <span>Change Password (Optional)</span>
@@ -251,7 +251,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 />
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* Footer Actions */}
           <div className="flex items-center justify-end gap-2.5 pt-3">

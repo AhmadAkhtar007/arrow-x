@@ -6,7 +6,9 @@ import {
   findOffer,
   findProduct,
   findVariant,
+  getOfferSummary,
   getStartingPrice,
+  searchCatalog,
 } from './catalog.ts';
 
 const expectedCatalog = [
@@ -105,3 +107,33 @@ test('keeps canonical catalog data deeply immutable at runtime', () => {
   assert.ok(Object.isFrozen(variant.offers));
   assert.ok(Object.isFrozen(offer));
 });
+
+test('searches parent and variant names while returning parent products', () => {
+  assert.deepEqual(searchCatalog('Avlon').map((product) => product.id), ['valorant']);
+  assert.deepEqual(searchCatalog('Keyser').map((product) => product.id), ['fivem']);
+  assert.deepEqual(searchCatalog('Arcane Web').map((product) => product.id), ['arc-raiders']);
+  assert.deepEqual(searchCatalog('  ').map((product) => product.id), catalog.map((product) => product.id));
+});
+
+test('builds structured offer summaries without fallback tiers', () => {
+  assert.deepEqual(getOfferSummary('valorant'), {
+    lowPrice: 4.99,
+    highPrice: 249.99,
+    offerCount: 9,
+  });
+  assert.deepEqual(getOfferSummary('mecha-chamelion'), {
+    lowPrice: 12.99,
+    highPrice: 24.99,
+    offerCount: 2,
+  });
+  assert.equal(getOfferSummary('non-existent'), undefined);
+});
+
+test('ensures all 23 products have valid heroImage paths', () => {
+  for (const p of catalog) {
+    assert.ok(p.heroImage, `Product ${p.id} missing heroImage`);
+    assert.equal(p.heroImage, `/products/${p.id}.webp`);
+  }
+});
+
+

@@ -1,24 +1,9 @@
-export interface Product {
-  id: string;
-  name: string;
-  category: 'Shooter' | 'Survival' | 'Battle Royale' | 'Spoofer' | 'Tools';
-  tagline: string;
-  image: string;
-  heroImage?: string;
-  status: 'Undetected' | 'Updating' | 'Testing';
-  pricing: {
-    day?: number;
-    week?: number;
-    month?: number;
-    lifetime?: number;
-  };
-  rating: number;
-  salesCount: number;
-  isTopPick?: boolean;
-  features: string[];
-  compatibility: string[];
-  lastUpdated: string;
-}
+export type {
+  CatalogCategory,
+  CatalogProduct as Product,
+  PriceOffer,
+  ProductVariant,
+} from '@arrowx/shared/catalog';
 
 export interface Review {
   id: string;

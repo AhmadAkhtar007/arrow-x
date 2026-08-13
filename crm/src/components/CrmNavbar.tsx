@@ -2,14 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { ArrowXLogo } from './ArrowXLogo';
-import { User, LogOut, Settings, ShieldCheck } from 'lucide-react';
+import { User, ShieldCheck } from 'lucide-react';
 import { ProfileModal } from './ProfileModal';
 
 export const CrmNavbar: React.FC = () => {
   const pathname = usePathname();
-  const router = useRouter();
   
   // Hide top navbar entirely on all admin pages to prevent duplicate headers
   if (pathname?.startsWith('/admin')) {
@@ -36,13 +35,6 @@ export const CrmNavbar: React.FC = () => {
     fetchSession();
   }, [pathname]);
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    setCurrentUser(null);
-    router.push('/login');
-    router.refresh();
-  };
-
   return (
     <>
       <header className="sticky top-3 sm:top-4 z-40 flex justify-center px-3 sm:px-6 pointer-events-none transition-all">
@@ -64,7 +56,7 @@ export const CrmNavbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Profile, Settings & Logout */}
+          {/* Right: Customer Profile */}
           <div className="flex items-center gap-2 font-mono text-xs">
             
             {/* Authenticated Customer View */}
@@ -77,22 +69,6 @@ export const CrmNavbar: React.FC = () => {
                 >
                   <User className="h-3.5 w-3.5" />
                   <span>{currentUser.name || currentUser.username}</span>
-                </button>
-
-                <button
-                  onClick={() => setShowProfileModal(true)}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 hover:text-white transition-all cursor-pointer"
-                  title="Account Settings"
-                >
-                  <Settings className="h-3.5 w-3.5" />
-                </button>
-
-                <button
-                  onClick={handleLogout}
-                  className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all cursor-pointer"
-                  title="Sign Out"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
                 </button>
               </>
             )}

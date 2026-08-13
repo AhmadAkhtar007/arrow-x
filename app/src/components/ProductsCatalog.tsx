@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, Star, Check, ArrowRight } from 'lucide-react';
+import { Search, Layers3, ArrowRight } from 'lucide-react';
+import { getStartingPrice, searchCatalog } from '@arrowx/shared/catalog';
 import type { Product } from '../types';
 import { useTheme } from '../context/ThemeContext';
 
 interface ProductsCatalogProps {
-  products: Product[];
+  products: readonly Product[];
   onSelectProduct: (product: Product) => void;
 }
 
@@ -17,21 +18,8 @@ export const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
 }) => {
   const { themeConfig } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-
-  const categories = ['All', 'Shooter', 'Battle Royale', 'Survival'];
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.features.some(f => f.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    const matchesCategory = 
-      selectedCategory === 'All' || product.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
-  });
+  const searchMatches = new Set(searchCatalog(searchQuery).map((product) => product.id));
+  const filteredProducts = products.filter((product) => searchMatches.has(product.id));
 
   return (
     <section id="products-catalog" className="py-12 relative">
@@ -56,10 +44,8 @@ export const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
           </div>
         </div>
 
-        {/* Search Bar & Category Filter Bar */}
-        <div className="space-y-4 mb-8">
-          
-          {/* Search Input Bar */}
+        {/* Plain Search Bar */}
+        <div className="mb-8">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 opacity-70" style={{ color: themeConfig.accent }} />
             <input
@@ -79,36 +65,6 @@ export const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
               </button>
             )}
           </div>
-
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            {categories.map((cat) => {
-              const isSelected = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? 'font-bold shadow-md'
-                      : 'bg-[#0a0f0d] text-zinc-400 border border-white/5 hover:text-white hover:border-white/15'
-                  }`}
-                  style={
-                    isSelected
-                      ? {
-                          backgroundColor: themeConfig.buttonBg,
-                          color: themeConfig.buttonText,
-                          boxShadow: `0 0 15px ${themeConfig.glow}`,
-                        }
-                      : undefined
-                  }
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-
         </div>
 
         {/* Products Poster Grid */}
@@ -116,106 +72,105 @@ export const ProductsCatalog: React.FC<ProductsCatalogProps> = ({
           <div className="text-center py-16 rounded-2xl bg-[#080d0a] border border-white/10 p-8">
             <p className="text-zinc-400 text-sm">No products found matching "{searchQuery}".</p>
             <button
-              onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+              onClick={() => setSearchQuery('')}
               className="mt-3 px-4 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
               style={{ backgroundColor: themeConfig.badgeBg, color: themeConfig.accent }}
             >
-              Reset Filters
+              Reset Search
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-5">
-            {filteredProducts.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                prefetch={true}
-                className="product-card group rounded-2xl bg-[#0a0f0c] border border-white/10 overflow-hidden flex flex-col justify-between cursor-pointer shadow-lg block"
-              >
-                {/* Poster Artwork Header */}
-                <div className="relative h-48 w-full overflow-hidden bg-black">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover filter brightness-75 card-poster-img"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0c] via-transparent to-black/40" />
+            {filteredProducts.map((product) => {
+              const startingPrice = getStartingPrice(product.id);
+              return (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  prefetch={true}
+                  className="product-card group rounded-2xl bg-[#0a0f0c] border border-white/10 overflow-hidden flex flex-col justify-between cursor-pointer shadow-lg block"
+                >
+                  {/* Poster Artwork Header */}
+                  <div className="relative h-48 w-full overflow-hidden bg-black">
+                    <img
+                      src={product.heroImage}
+                      alt={product.name}
+                      onError={(event) => {
+                        event.currentTarget.src = '/assets/logo-green.png';
+                        event.currentTarget.classList.add('object-contain', 'p-12');
+                      }}
+                      className="w-full h-full object-cover filter brightness-75 card-poster-img"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f0c] via-transparent to-black/40" />
 
-                  {/* Status Indicator Top Left */}
-                  <div 
-                    className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-black/70 backdrop-blur-md border"
-                    style={{ borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.accent }} />
-                    {product.status}
-                  </div>
-
-                  {/* Rating Top Right */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-black/70 backdrop-blur-md text-amber-300">
-                    <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
-                    <span>{product.rating}</span>
-                  </div>
-                </div>
-
-                {/* Body Details */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span 
-                        className="text-[10px] font-mono uppercase tracking-widest font-semibold"
-                        style={{ color: themeConfig.accent }}
-                      >
-                        {product.category}
-                      </span>
-                      <span className="text-[11px] text-zinc-500 font-mono">
-                        {product.salesCount.toLocaleString()} sold
-                      </span>
+                    {/* Status Indicator Top Left */}
+                    <div 
+                      className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold bg-black/70 backdrop-blur-md border"
+                      style={{ borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: themeConfig.accent }} />
+                      {product.status}
                     </div>
 
-                    <h3 className="text-xl font-bold font-display text-white transition-colors">
-                      {product.name}
-                    </h3>
-
-                    <p className="text-xs text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
-                      {product.tagline}
-                    </p>
-
-                    {/* Top 2 Features Checklist */}
-                    <div className="mt-3 space-y-1.5">
-                      {product.features.slice(0, 2).map((feat, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5 text-xs text-zinc-300">
-                          <Check className="h-3.5 w-3.5 flex-shrink-0" style={{ color: themeConfig.accent }} />
-                          <span className="truncate">{feat}</span>
-                        </div>
-                      ))}
+                    <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-black/70 backdrop-blur-md text-zinc-200">
+                      <Layers3 className="h-3 w-3" />
+                      <span>{product.variants.length} options</span>
                     </div>
                   </div>
 
-                  {/* Bottom Pricing & CTA */}
-                  <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                  {/* Body Details */}
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                     <div>
-                      <div className="text-[10px] text-zinc-500 font-mono">Starts from</div>
-                      <div className="text-base font-bold font-display text-white">
-                        ${product.pricing.day?.toFixed(2)} <span className="text-xs font-normal text-zinc-400">/day</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span 
+                          className="text-[10px] font-mono uppercase tracking-widest font-semibold"
+                          style={{ color: themeConfig.accent }}
+                        >
+                          {product.category}
+                        </span>
+                        <span className="text-[11px] text-zinc-500 font-mono">{product.variants.length} variants</span>
+                      </div>
+
+                      <h3 className="text-xl font-bold font-display text-white transition-colors">
+                        {product.name}
+                      </h3>
+
+                      <p className="text-xs text-zinc-400 mt-1 line-clamp-2 leading-relaxed">
+                        {product.description}
+                      </p>
+
+                      {/* Top 2 Features Checklist */}
+                      <div className="mt-3 space-y-1.5">
+                        {product.variants.slice(0, 2).map((variant) => (
+                          <div key={variant.id} className="flex items-center gap-1.5 text-xs text-zinc-300">
+                            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: themeConfig.accent }} />
+                            <span className="truncate">{variant.name}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    <div 
-                      className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer"
-                      style={{
-                        backgroundColor: themeConfig.badgeBg,
-                        borderColor: themeConfig.badgeBorder,
-                        color: themeConfig.accent,
-                      }}
-                    >
-                      <span>Select</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
+                    {/* Bottom Pricing & CTA */}
+                    <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] text-zinc-500 font-mono">Starts from</div>
+                        <div className="text-base font-bold font-display text-white">
+                          {startingPrice === undefined ? 'Unavailable' : `$${startingPrice.toFixed(2)}`}
+                        </div>
+                      </div>
+
+                      <div 
+                        className="px-3.5 py-1.5 rounded-xl font-mono text-xs font-bold flex items-center gap-1 transition-all group-hover:scale-105"
+                        style={{ backgroundColor: themeConfig.badgeBg, color: themeConfig.accent, border: `1px solid ${themeConfig.badgeBorder}` }}
+                      >
+                        <span>Select</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </div>
                     </div>
                   </div>
-                </div>
-
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
 

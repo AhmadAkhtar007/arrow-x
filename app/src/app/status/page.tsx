@@ -28,17 +28,12 @@ export default function StatusPage() {
     }, 600);
   };
 
-  const productStatusList = productsData.map((prod, idx) => {
-    const versions = ['v4.2.1', 'v3.1.4', 'v2.8.0', 'v1.9.2', 'v4.0.8', 'v2.5.1', 'v3.6.0', 'v1.8.4'];
-    const times = ['2h ago', '4h ago', '6h ago', '8h ago', '12h ago', '18h ago', '1d ago', '2d ago'];
-    return {
-      id: prod.id,
-      name: prod.name,
-      version: versions[idx % versions.length],
-      status: prod.status || 'Undetected',
-      lastChecked: times[idx % times.length],
-    };
-  });
+  const productStatusList = productsData.map((prod) => ({
+    id: prod.id,
+    name: prod.name,
+    category: prod.category,
+    status: prod.status || 'Undetected',
+  }));
 
   return (
     <div className="min-h-screen pt-24 pb-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -188,7 +183,7 @@ export default function StatusPage() {
               key={product.id}
               className="p-3.5 sm:p-4 rounded-xl bg-black/40 border border-white/5 hover:border-white/15 flex items-center justify-between transition-all duration-200"
             >
-              {/* Left: Indicator Dot + Name + Version */}
+              {/* Left: Indicator Dot + Name + Category */}
               <div className="flex items-center gap-3 min-w-0">
                 <span 
                   className="w-2 h-2 rounded-full flex-shrink-0"
@@ -198,19 +193,16 @@ export default function StatusPage() {
                   <span className="font-bold text-white text-sm tracking-tight truncate">
                     {product.name}
                   </span>
-                  <span className="text-zinc-400 font-mono text-xs font-normal">
-                    {product.version}
+                  <span className="text-zinc-500 font-mono text-[11px] font-normal">
+                    {product.category}
                   </span>
                 </div>
               </div>
 
-              {/* Right: Undetected Status + Timestamp */}
+              {/* Right: Undetected Status */}
               <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0 text-xs font-mono">
                 <span className="font-semibold" style={{ color: themeConfig.accent }}>
                   {product.status}
-                </span>
-                <span className="text-zinc-400">
-                  {product.lastChecked}
                 </span>
               </div>
             </div>

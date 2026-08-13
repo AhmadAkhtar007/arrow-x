@@ -40,9 +40,264 @@
       "discordHandle": "pro_sniper_99",
       "role": "customer",
       "createdAt": "2026-08-11T06:59:13.347Z"
+    },
+    {
+      "id": "usr_1786505692382_6grm8",
+      "name": "E2E Buyer",
+      "email": "e2e_buyer_1786505690093@example.com",
+      "username": "e2e_buyer",
+      "role": "customer",
+      "otpCode": "629883",
+      "otpExpiresAt": "2026-08-12T03:44:52.382Z",
+      "createdAt": "2026-08-12T03:34:52.382Z"
+    },
+    {
+      "id": "usr_1786505724655_9o9s4",
+      "name": "E2E Buyer",
+      "email": "e2e_buyer_1786505724606@example.com",
+      "username": "e2e_buyer",
+      "role": "customer",
+      "otpCode": "334096",
+      "otpExpiresAt": "2026-08-12T03:45:24.655Z",
+      "createdAt": "2026-08-12T03:35:24.655Z"
+    },
+    {
+      "id": "usr_1786505747294_y6gyw",
+      "name": "E2E Buyer",
+      "email": "e2e_buyer_1786505747234@example.com",
+      "username": "e2e_buyer",
+      "role": "customer",
+      "otpCode": null,
+      "otpExpiresAt": null,
+      "createdAt": "2026-08-12T03:35:47.294Z"
+    },
+    {
+      "id": "usr_1786505786065_wil1e",
+      "name": "E2E Buyer",
+      "email": "e2e_buyer_1786505785983@example.com",
+      "username": "e2e_buyer",
+      "role": "customer",
+      "otpCode": null,
+      "otpExpiresAt": null,
+      "createdAt": "2026-08-12T03:36:26.066Z"
+    },
+    {
+      "id": "usr_1786546047498_quq9j",
+      "name": "Legend",
+      "email": "mrahmadakhtar@gmail.com",
+      "username": "legend",
+      "role": "customer",
+      "otpCode": null,
+      "otpExpiresAt": null,
+      "createdAt": "2026-08-12T14:47:27.498Z",
+      "googleId": "7679d57f-09d0-4e0a-85f6-89e5bcbb29ff",
+      "discordHandle": "_living_legend_"
     }
   ],
   "orders": [
+    {
+      "id": "AX-34777",
+      "userId": "usr_1786505786065_wil1e",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505785983@example.com",
+      "gameName": "Counter-Strike 2",
+      "planTier": "Predator (3 Months)",
+      "amount": 14.99,
+      "paymentMethod": "GIFT_CARD",
+      "status": "Pending",
+      "paymentStatus": "VERIFICATION_PENDING",
+      "fulfillmentStatus": "PENDING",
+      "product": {
+        "productId": "counter-strike-2",
+        "productName": "Counter-Strike 2",
+        "variantId": "predator",
+        "variantName": "Predator",
+        "offerId": "3-months",
+        "offerLabel": "3 Months",
+        "amountUsd": 14.99
+      },
+      "proof": {
+        "giftCardCode": "REW-9982-1102-4491-GIFT"
+      },
+      "createdAt": "Aug 12, 8:36 AM",
+      "updatedAt": "Just now"
+    },
+    {
+      "id": "AX-52766",
+      "userId": "usr_1786505786065_wil1e",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505785983@example.com",
+      "gameName": "ARC Raiders",
+      "planTier": "Temporary Account (300+ Hours)",
+      "amount": 5.99,
+      "paymentMethod": "USDT_TRC20",
+      "status": "Pending",
+      "paymentStatus": "VERIFICATION_PENDING",
+      "fulfillmentStatus": "PENDING",
+      "product": {
+        "productId": "arc-raiders",
+        "productName": "ARC Raiders",
+        "variantId": "temporary-account",
+        "variantName": "Temporary Account",
+        "offerId": "300-plus-hours",
+        "offerLabel": "300+ Hours",
+        "amountUsd": 5.99
+      },
+      "proof": {
+        "txHash": "trc20_hash_987654321",
+        "screenshotUrl": "/uploads/proofs/usdt_receipt.png"
+      },
+      "createdAt": "Aug 12, 8:36 AM",
+      "updatedAt": "Just now"
+    },
+    {
+      "id": "AX-13178",
+      "userId": "usr_1786505786065_wil1e",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505785983@example.com",
+      "gameName": "Apex Legends",
+      "planTier": "Arcane (1 Week)",
+      "amount": 22.99,
+      "paymentMethod": "LTC",
+      "status": "Pending",
+      "paymentStatus": "REJECTED",
+      "fulfillmentStatus": "PENDING",
+      "product": {
+        "productId": "apex-legends",
+        "productName": "Apex Legends",
+        "variantId": "arcane",
+        "variantName": "Arcane",
+        "offerId": "1-week",
+        "offerLabel": "1 Week",
+        "amountUsd": 22.99
+      },
+      "proof": {
+        "screenshotUrl": "/uploads/proofs/ltc_test_receipt.png"
+      },
+      "createdAt": "Aug 12, 8:36 AM",
+      "updatedAt": "Just now",
+      "rejectionReason": "Transaction ID not found on Litecoin mainnet.",
+      "verifiedBy": "LivingLegend",
+      "verifiedAt": "8:36 AM"
+    },
+    {
+      "id": "AX-27215",
+      "userId": "usr_1786505786065_wil1e",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505785983@example.com",
+      "gameName": "Valorant",
+      "planTier": "Avlon (1 Month)",
+      "amount": 59.99,
+      "paymentMethod": "BTC",
+      "status": "Completed",
+      "paymentStatus": "VERIFIED",
+      "fulfillmentStatus": "DISPATCHED",
+      "product": {
+        "productId": "valorant",
+        "productName": "Valorant",
+        "variantId": "avlon",
+        "variantName": "Avlon",
+        "offerId": "1-month",
+        "offerLabel": "1 Month",
+        "amountUsd": 59.99
+      },
+      "proof": {
+        "txHash": "0x9a8f3b2c1e7d6a5432109876543210abcdef1234567890abcdef1234567890ab"
+      },
+      "createdAt": "Aug 12, 8:36 AM",
+      "updatedAt": "Just now",
+      "notes": "Provisioned on node-east-01",
+      "verifiedBy": "LivingLegend",
+      "verifiedAt": "8:36 AM",
+      "claimedBy": "LivingLegend",
+      "claimedAt": "8:36 AM",
+      "licenseKey": "AX-VAL-AVLON-9912-E2E-KEY",
+      "dispatchedBy": "LivingLegend",
+      "dispatchedAt": "8:36 AM"
+    },
+    {
+      "id": "AX-36691",
+      "userId": "usr_1786505747294_y6gyw",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505747234@example.com",
+      "gameName": "ARC Raiders",
+      "planTier": "Temporary Account (300+ Hours)",
+      "amount": 5.99,
+      "paymentMethod": "USDT_TRC20",
+      "status": "Pending",
+      "paymentStatus": "VERIFICATION_PENDING",
+      "fulfillmentStatus": "PENDING",
+      "product": {
+        "productId": "arc-raiders",
+        "productName": "ARC Raiders",
+        "variantId": "temporary-account",
+        "variantName": "Temporary Account",
+        "offerId": "300-plus-hours",
+        "offerLabel": "300+ Hours",
+        "amountUsd": 5.99
+      },
+      "proof": {
+        "txHash": "trc20_hash_987654321",
+        "screenshotUrl": "/uploads/proofs/usdt_receipt.png"
+      },
+      "createdAt": "Aug 12, 8:35 AM",
+      "updatedAt": "Just now"
+    },
+    {
+      "id": "AX-39319",
+      "userId": "usr_1786505747294_y6gyw",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505747234@example.com",
+      "gameName": "Apex Legends",
+      "planTier": "Arcane (1 Week)",
+      "amount": 22.99,
+      "paymentMethod": "LTC",
+      "status": "Pending",
+      "paymentStatus": "VERIFICATION_PENDING",
+      "fulfillmentStatus": "PENDING",
+      "product": {
+        "productId": "apex-legends",
+        "productName": "Apex Legends",
+        "variantId": "arcane",
+        "variantName": "Arcane",
+        "offerId": "1-week",
+        "offerLabel": "1 Week",
+        "amountUsd": 22.99
+      },
+      "proof": {
+        "screenshotUrl": "/uploads/proofs/ltc_test_receipt.png"
+      },
+      "createdAt": "Aug 12, 8:35 AM",
+      "updatedAt": "Just now"
+    },
+    {
+      "id": "AX-71048",
+      "userId": "usr_1786505747294_y6gyw",
+      "customerName": "E2E Buyer",
+      "customerEmail": "e2e_buyer_1786505747234@example.com",
+      "gameName": "Valorant",
+      "planTier": "Avlon (1 Month)",
+      "amount": 59.99,
+      "paymentMethod": "BTC",
+      "status": "Pending",
+      "paymentStatus": "VERIFICATION_PENDING",
+      "fulfillmentStatus": "PENDING",
+      "product": {
+        "productId": "valorant",
+        "productName": "Valorant",
+        "variantId": "avlon",
+        "variantName": "Avlon",
+        "offerId": "1-month",
+        "offerLabel": "1 Month",
+        "amountUsd": 59.99
+      },
+      "proof": {
+        "txHash": "0x9a8f3b2c1e7d6a5432109876543210abcdef1234567890abcdef1234567890ab"
+      },
+      "createdAt": "Aug 12, 8:35 AM",
+      "updatedAt": "Just now",
+      "notes": "Please verify BTC quickly"
+    },
     {
       "id": "AX-67572",
       "customerEmail": "pro_gamer@gmail.com",
@@ -58,5 +313,186 @@
       "licenseKey": "AX-VAL-TEST-9988-VIP"
     }
   ],
-  "tickets": []
+  "tickets": [
+    {
+      "id": "TCK-3159",
+      "customerEmail": "mrahmadakhtar@gmail.com",
+      "customerName": "mrahmadakhtar",
+      "discordHandle": "_living_legend_",
+      "subject": "Test",
+      "status": "Open",
+      "createdAt": "Aug 14, 12:42 AM",
+      "updatedAt": "Just now",
+      "messages": [
+        {
+          "id": "msg_1786650150593",
+          "sender": "customer",
+          "senderName": "Customer",
+          "text": "Sup Bro.",
+          "timestamp": "Aug 14, 12:42 AM"
+        },
+        {
+          "id": "msg_1786650276952",
+          "sender": "staff",
+          "senderName": "LivingLegend",
+          "text": "Wassup Dude?",
+          "timestamp": "Aug 14, 12:44 AM"
+        }
+      ]
+    }
+  ],
+  "paymentSettings": {
+    "btcAddress": "156uWuAoK4MZpZGcJcXeZ4pvqetc8zrsdA",
+    "btcQrUrl": "/assets/payments/btc.png",
+    "solAddress": "6Thyxoq4WwyobyTepmiqxN6n2JpQfsFfwQpz9c1gv6m8",
+    "solQrUrl": "/assets/payments/sol.png",
+    "usdtTrc20Address": "THYKE8YXanrBSCvFtiihVLYstNNprKUhoC",
+    "usdtTrc20QrUrl": "/assets/payments/usdt-trc20.png",
+    "giftCardLinks": [
+      {
+        "denominationUsd": 3,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%203%20USD"
+      },
+      {
+        "denominationUsd": 4,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%204%20USD"
+      },
+      {
+        "denominationUsd": 5,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%205%20USD"
+      },
+      {
+        "denominationUsd": 6,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%206%20USD"
+      },
+      {
+        "denominationUsd": 7,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%207%20USD"
+      },
+      {
+        "denominationUsd": 8,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%208%20USD"
+      },
+      {
+        "denominationUsd": 9,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%209%20USD"
+      },
+      {
+        "denominationUsd": 10,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2010%20USD"
+      },
+      {
+        "denominationUsd": 12,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2012%20USD"
+      },
+      {
+        "denominationUsd": 13,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2013%20USD"
+      },
+      {
+        "denominationUsd": 14,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2014%20USD"
+      },
+      {
+        "denominationUsd": 15,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2015%20USD"
+      },
+      {
+        "denominationUsd": 16,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2016%20USD"
+      },
+      {
+        "denominationUsd": 20,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2020%20USD"
+      },
+      {
+        "denominationUsd": 22,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2022%20USD"
+      },
+      {
+        "denominationUsd": 23,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2023%20USD"
+      },
+      {
+        "denominationUsd": 25,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2025%20USD"
+      },
+      {
+        "denominationUsd": 26,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2026%20USD"
+      },
+      {
+        "denominationUsd": 27,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2027%20USD"
+      },
+      {
+        "denominationUsd": 28,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2028%20USD"
+      },
+      {
+        "denominationUsd": 30,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2030%20USD"
+      },
+      {
+        "denominationUsd": 35,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2035%20USD"
+      },
+      {
+        "denominationUsd": 40,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2040%20USD"
+      },
+      {
+        "denominationUsd": 42,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2042%20USD"
+      },
+      {
+        "denominationUsd": 45,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2045%20USD"
+      },
+      {
+        "denominationUsd": 50,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2050%20USD"
+      },
+      {
+        "denominationUsd": 55,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2055%20USD"
+      },
+      {
+        "denominationUsd": 60,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2060%20USD"
+      },
+      {
+        "denominationUsd": 70,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2070%20USD"
+      },
+      {
+        "denominationUsd": 80,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%2080%20USD"
+      },
+      {
+        "denominationUsd": 100,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%20100%20USD"
+      },
+      {
+        "denominationUsd": 160,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%20160%20USD"
+      },
+      {
+        "denominationUsd": 200,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%20200%20USD"
+      },
+      {
+        "denominationUsd": 250,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%20250%20USD"
+      },
+      {
+        "denominationUsd": 400,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%20400%20USD"
+      },
+      {
+        "denominationUsd": 500,
+        "purchaseUrl": "https://www.g2a.com/search?query=REWARBLE%20VISA%20Gift%20Card%20500%20USD"
+      }
+    ]
+  }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyCustomerOtp } from '../../../../../lib/db';
+import { createClient } from '../../../../../lib/supabase/server';
+import { verifyCustomerOtp, upsertOAuthCustomer } from '../../../../../lib/db';
 import { signToken, AUTH_COOKIE_NAME } from '../../../../../lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -8,27 +9,57 @@ export async function POST(req: NextRequest) {
     const { email, code, name, discordHandle } = body;
 
     if (!email || !code) {
-      return NextResponse.json({ error: 'Email and 6-digit code are required.' }, { status: 400 });
+      return NextResponse.json({ error: 'Email and verification code are required.' }, { status: 400 });
     }
 
-    const user = await verifyCustomerOtp(email, code, name, discordHandle);
+    const normalizedEmail = email.trim().toLowerCase();
+    const trimmedCode = code.trim();
+
+    let authenticatedUser: any = null;
+
+    // 1. Attempt Native Supabase OTP Verification
+    const supabase = await createClient();
+    const { data: supabaseAuth, error: supabaseError } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token: trimmedCode,
+      type: 'email',
+    });
+
+    if (!supabaseError && supabaseAuth?.user) {
+      const user = await upsertOAuthCustomer({
+        email: normalizedEmail,
+        name: name || normalizedEmail.split('@')[0],
+        provider: 'google', // Generic verified email
+        providerId: supabaseAuth.user.id,
+        discordHandle,
+      });
+      authenticatedUser = user;
+    } else {
+      // 2. Fallback to local DB verification
+      try {
+        const user = await verifyCustomerOtp(normalizedEmail, trimmedCode, name, discordHandle);
+        authenticatedUser = user;
+      } catch (localError: any) {
+        throw new Error(supabaseError?.message || localError.message || 'Invalid verification code.');
+      }
+    }
 
     const token = await signToken({
-      id: user.id,
-      name: user.name,
-      username: user.username,
-      email: user.email,
+      id: authenticatedUser.id,
+      name: authenticatedUser.name,
+      username: authenticatedUser.username,
+      email: authenticatedUser.email,
       role: 'customer',
     }, '365d');
 
     const response = NextResponse.json({
       success: true,
       user: {
-        id: user.id,
-        name: user.name,
-        username: user.username,
-        email: user.email,
-        discordHandle: user.discordHandle,
+        id: authenticatedUser.id,
+        name: authenticatedUser.name,
+        username: authenticatedUser.username,
+        email: authenticatedUser.email,
+        discordHandle: authenticatedUser.discordHandle,
         role: 'customer',
       },
     });

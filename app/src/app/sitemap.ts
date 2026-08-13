@@ -12,7 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route === '' ? 1.0 : 0.8,
   }));
 
-  // Dynamic product routes for all 24 games
+  // Dynamic product routes for all 23 games
   const productRoutes = productsData.map((product) => ({
     url: `${baseUrl}/products/${product.id}`,
     lastModified: new Date(),

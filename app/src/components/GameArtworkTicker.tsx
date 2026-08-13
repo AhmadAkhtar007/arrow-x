@@ -1,44 +1,43 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { useTheme } from '../context/ThemeContext';
-import { productsData } from '../data/mockData';
+import { catalog } from '@arrowx/shared/catalog';
 
 export const GameArtworkTicker: React.FC = () => {
-  const { themeConfig } = useTheme();
-  const tickerGames = productsData;
+  const tickerGames = catalog;
 
   return (
-    <div className="py-6 my-2 overflow-hidden relative">
-      {/* Infinite Portrait Poster Ticker (Calm, Silky-Smooth Speed) */}
-      <div className="relative mask-marquee py-3">
-        <div className="animate-marquee-game-ticker flex items-center gap-4 sm:gap-5">
+    <div className="py-2 md:py-3 overflow-hidden relative pointer-events-none select-none">
+      {/* Cinematic Infinite Portrait Poster Ticker with Deep Bilateral Edge Alpha Fade */}
+      <div className="relative mask-marquee-cinematic py-2">
+        <div className="animate-marquee-game-ticker flex items-center gap-4 sm:gap-6">
           {/* Loop twice for seamless infinite loop */}
           {[...tickerGames, ...tickerGames].map((product, idx) => (
-            <Link
+            <div
               key={`${product.id}-${idx}`}
-              href={`/products/${product.id}`}
-              className="product-card relative w-32 sm:w-36 md:w-40 aspect-[2/3] rounded-2xl sm:rounded-3xl overflow-hidden group cursor-pointer border border-white/10 flex-shrink-0 shadow-2xl bg-[#080d0a] block"
+              className="relative w-20 sm:w-24 md:w-28 lg:w-32 aspect-[2/3] rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 flex-shrink-0 shadow-[0_12px_36px_rgba(0,0,0,0.85)] bg-[#040806]"
             >
-              {/* Pristine Full-Bleed Portrait Game Box Art with Lazy Loading & Fallback */}
+              {/* 1. Base Game Artwork (Natural Colors & High Clarity) */}
               <img
-                src={product.image}
+                src={product.heroImage}
                 alt={product.name}
                 loading="lazy"
                 decoding="async"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80';
+                  (e.target as HTMLImageElement).src = '/assets/logo-green.png';
                 }}
-                className="w-full h-full object-cover object-center filter brightness-90 transition-all duration-300"
+                className="w-full h-full object-cover object-center filter brightness-95"
               />
 
-              {/* Subtle ambient hover sheen */}
-              <div 
-                className="absolute inset-0 opacity-0 group-hover:opacity-15 transition-opacity duration-300 pointer-events-none"
-                style={{ backgroundColor: themeConfig.accent }}
-              />
-            </Link>
+              {/* 2. Soft Dark Base Grounding (Bottom 25% only) */}
+              <div className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
+
+              {/* 3. Subtle Green Ambient Baseline Accent (Bottom 18% only) */}
+              <div className="absolute inset-x-0 bottom-0 h-[18%] bg-gradient-to-t from-emerald-500/30 via-emerald-500/5 to-transparent pointer-events-none" />
+
+              {/* 4. Crisp Specular Inner Border Ring */}
+              <div className="absolute inset-0 rounded-xl sm:rounded-2xl ring-1 ring-inset ring-white/10 pointer-events-none" />
+            </div>
           ))}
         </div>
       </div>

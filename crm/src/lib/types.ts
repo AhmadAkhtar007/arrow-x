@@ -1,9 +1,31 @@
+import type {
+  PaymentMethod,
+  PaymentStatus,
+  FulfillmentStatus,
+  OrderSnapshot,
+  PaymentProof,
+  PaymentSettings,
+  Order,
+} from '@arrowx/shared/orders';
+
+export type {
+  PaymentMethod,
+  PaymentStatus,
+  FulfillmentStatus,
+  OrderSnapshot,
+  PaymentProof,
+  PaymentSettings,
+  Order,
+};
+
 export interface UserAccount {
   id: string;
   name: string;
   email: string;
   username: string;
   discordHandle?: string;
+  discordId?: string;
+  googleId?: string;
   hwid?: string;
   role: 'customer';
   otpCode?: string | null;
@@ -30,8 +52,17 @@ export interface RealOrder {
   amount: number;
   paymentMethod: string;
   status: 'Pending' | 'Claimed' | 'Completed' | 'Cancelled';
+  paymentStatus: PaymentStatus;
+  fulfillmentStatus: FulfillmentStatus;
+  product?: OrderSnapshot;
+  proof?: PaymentProof;
+  rejectionReason?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
   claimedBy?: string | null;
   claimedAt?: string | null;
+  dispatchedBy?: string | null;
+  dispatchedAt?: string | null;
   licenseKey?: string | null;
   downloadUrl?: string | null;
   createdAt: string;
@@ -53,7 +84,6 @@ export interface RealSupportTicket {
   customerEmail: string;
   customerName?: string;
   discordHandle?: string;
-  category: 'HWID Reset' | 'Key Issue' | 'Injection Error' | 'General Question';
   subject: string;
   status: 'Open' | 'Pending Staff' | 'HWID Approved' | 'Resolved';
   claimedBy?: string | null;

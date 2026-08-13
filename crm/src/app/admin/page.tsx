@@ -27,9 +27,17 @@ import {
   ChevronRight,
   TrendingUp,
   Zap,
-  Lock
+  Lock,
+  Eye,
+  AlertTriangle,
+  XCircle,
+  Upload,
+  Check,
+  CreditCard,
+  Bitcoin,
+  Coins
 } from 'lucide-react';
-import { RealOrder, RealSupportTicket, AdminAccount, UserAccount } from '../../lib/types';
+import { RealOrder, RealSupportTicket, AdminAccount, UserAccount, PaymentSettings } from '../../lib/types';
 import { ArrowXLogo } from '../../components/ArrowXLogo';
 import { ProfileModal } from '../../components/ProfileModal';
 
@@ -37,7 +45,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'tickets' | 'customers' | 'team'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'tickets' | 'customers' | 'team' | 'settings'>('overview');
 
   // Authentication & Profile
   const [currentAdmin, setCurrentAdmin] = useState<any>(null);
@@ -56,7 +64,15 @@ export default function AdminDashboardPage() {
   // Orders Page Filters
   const [searchOrder, setSearchOrder] = useState('');
   const [selectedGameFilter, setSelectedGameFilter] = useState('All');
+  const [selectedPaymentStatusFilter, setSelectedPaymentStatusFilter] = useState('All');
   const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
+
+  // Proof Modal States
+  const [proofModalOrder, setProofModalOrder] = useState<RealOrder | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [copiedProofText, setCopiedProofText] = useState<string | null>(null);
 
   // Dispatch Modal States
   const [selectedOrder, setSelectedOrder] = useState<RealOrder | null>(null);
@@ -78,6 +94,21 @@ export default function AdminDashboardPage() {
   const [addAdminError, setAddAdminError] = useState('');
   const [addAdminSuccess, setAddAdminSuccess] = useState(false);
 
+  // Payment Settings State
+  const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+    btcAddress: '',
+    btcQrUrl: '',
+    solAddress: '',
+    solQrUrl: '',
+    usdtTrc20Address: '',
+    usdtTrc20QrUrl: '',
+    giftCardLinks: [],
+  });
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+  const [settingsError, setSettingsError] = useState('');
+  const [uploadingQr, setUploadingQr] = useState<string | null>(null);
+
   // 1. Authenticate on Mount
   useEffect(() => {
     const checkAuth = async () => {
@@ -92,6 +123,7 @@ export default function AdminDashboardPage() {
 
         setCurrentAdmin(data.user);
         fetchDashboardData();
+        fetchPaymentSettings();
       } catch {
         router.push('/admin/login');
       } finally {
@@ -102,56 +134,109 @@ export default function AdminDashboardPage() {
     checkAuth();
   }, [router]);
 
-  // 2. Fetch Live Dashboard Data
+  // 2. Fetch Dashboard Stream
   const fetchDashboardData = async () => {
     try {
-      const [ordRes, tckRes, customersRes, teamRes] = await Promise.all([
+      const [ordersRes, ticketsRes, customersRes, teamRes] = await Promise.all([
         fetch('/api/orders'),
         fetch('/api/tickets'),
         fetch('/api/admin/customers'),
         fetch('/api/admin/team'),
       ]);
 
-      const [ordData, tckData, customersData, teamData] = await Promise.all([
-        ordRes.json(),
-        tckRes.json(),
+      const [ordersData, ticketsData, customersData, teamData] = await Promise.all([
+        ordersRes.json(),
+        ticketsRes.json(),
         customersRes.json(),
         teamRes.json(),
       ]);
 
-      if (ordData.success && ordData.orders) setOrders(ordData.orders);
-      if (tckData.success && tckData.tickets) {
-        setTickets(tckData.tickets);
-        if (tckData.tickets.length > 0 && !selectedTicket) {
-          setSelectedTicket(tckData.tickets[0]);
-        }
-      }
-      if (customersData.success && customersData.customers) setCustomers(customersData.customers);
-      if (teamData.success && teamData.admins) setTeam(teamData.admins);
+      if (ordersData.success) setOrders(ordersData.orders || []);
+      if (ticketsData.success) setTickets(ticketsData.tickets || []);
+      if (customersData.success) setCustomers(customersData.customers || []);
+      if (teamData.success) setTeam(teamData.team || []);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error('Error fetching dashboard data:', err);
     }
   };
 
-  // 3. Admin Claim / Unclaim Order
-  const handleToggleClaim = async (orderId: string, isClaimed: boolean) => {
+  const fetchPaymentSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/payment-settings');
+      const data = await res.json();
+      if (data.success && data.settings) {
+        setPaymentSettings(data.settings);
+      }
+    } catch (err) {
+      console.error('Error fetching payment settings:', err);
+    }
+  };
+
+  // 3. Verify Payment
+  const handleVerifyPayment = async (orderId: string) => {
+    setIsVerifying(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/verify`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success && data.order) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? data.order : o)));
+        if (proofModalOrder?.id === orderId) {
+          setProofModalOrder(data.order);
+        }
+      }
+    } catch (err) {
+      console.error('Error verifying payment:', err);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // 4. Reject Payment
+  const handleRejectPayment = async (orderId: string) => {
+    if (!rejectReasonInput.trim()) return;
+    setIsRejecting(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: rejectReasonInput.trim() }),
+      });
+      const data = await res.json();
+      if (data.success && data.order) {
+        setOrders((prev) => prev.map((o) => (o.id === orderId ? data.order : o)));
+        if (proofModalOrder?.id === orderId) {
+          setProofModalOrder(data.order);
+        }
+        setRejectReasonInput('');
+      }
+    } catch (err) {
+      console.error('Error rejecting payment:', err);
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
+  // 5. Toggle Claim / Unclaim (Only for Verified Orders)
+  const handleToggleClaim = async (orderId: string, isCurrentlyClaimed: boolean) => {
     try {
       const res = await fetch(`/api/orders/${orderId}/claim`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: isClaimed ? 'unclaim' : 'claim' }),
+        body: JSON.stringify({ action: isCurrentlyClaimed ? 'unclaim' : 'claim' }),
       });
 
       const data = await res.json();
       if (data.success && data.order) {
         setOrders((prev) => prev.map((o) => (o.id === orderId ? data.order : o)));
+      } else if (data.error) {
+        alert(data.error);
       }
     } catch (err) {
       console.error('Error updating claim status:', err);
     }
   };
 
-  // 4. Dispatch 3rd Party Key
+  // 6. Dispatch License Key
   const handleDispatchKey = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrder || !customKey.trim()) return;
@@ -177,6 +262,8 @@ export default function AdminDashboardPage() {
           setCustomKey('');
           setDispatchNotes('');
         }, 1200);
+      } else if (data.error) {
+        alert(data.error);
       }
     } catch (err) {
       console.error('Error dispatching key:', err);
@@ -185,7 +272,53 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 5. Send Ticket Reply
+  // 7. Save Payment Settings
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSettingsSaving(true);
+    setSettingsError('');
+    setSettingsSuccess(false);
+
+    try {
+      const res = await fetch('/api/admin/payment-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentSettings),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save settings.');
+      }
+
+      setSettingsSuccess(true);
+      setTimeout(() => setSettingsSuccess(false), 3000);
+    } catch (err: any) {
+      setSettingsError(err.message || 'Error saving settings.');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  // 8. Upload QR Code
+  const handleQrUpload = async (key: 'btcQrUrl' | 'solQrUrl' | 'usdtTrc20QrUrl', file: File) => {
+    setUploadingQr(key);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/uploads', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setPaymentSettings((prev) => ({ ...prev, [key]: data.url }));
+      }
+    } catch (err) {
+      console.error('QR upload failed:', err);
+    } finally {
+      setUploadingQr(null);
+    }
+  };
+
+  // 9. Send Ticket Reply
   const handleSendTicketReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTicket || !replyText.trim()) return;
@@ -211,25 +344,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 6. 1-Click HWID Reset Approval
-  const handleApproveHwidReset = async (ticketId: string) => {
-    try {
-      const res = await fetch(`/api/tickets/${ticketId}/hwid`, {
-        method: 'POST',
-      });
-      const data = await res.json();
-      if (data.success) {
-        setTickets((prev) => prev.map((t) => (t.id === ticketId ? data.ticket : t)));
-        if (selectedTicket?.id === ticketId) {
-          setSelectedTicket(data.ticket);
-        }
-      }
-    } catch (err) {
-      console.error('Error approving HWID:', err);
-    }
-  };
-
-  // 7. Create New Admin (Super Admin)
+  // 10. Create Admin
   const handleCreateNewAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddAdminError('');
@@ -263,14 +378,14 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 8. Admin Logout
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/admin/login');
+  const handleCopyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedProofText(label);
+    setTimeout(() => setCopiedProofText(null), 2000);
   };
 
   const handleCopyOrderSpec = (ord: RealOrder) => {
-    const spec = `Game: ${ord.gameName} | Tier: ${ord.planTier} | Customer: ${ord.customerEmail}`;
+    const spec = `Order: ${ord.id} | Product: ${ord.gameName} | Tier: ${ord.planTier} | Price: $${ord.amount.toFixed(2)} | Customer: ${ord.customerEmail}`;
     navigator.clipboard.writeText(spec);
     setCopiedOrderId(ord.id);
     setTimeout(() => setCopiedOrderId(null), 2000);
@@ -288,11 +403,16 @@ export default function AdminDashboardPage() {
   }
 
   // Calculated Stats
-  const unclaimedOrders = orders.filter((o) => o.status === 'Pending');
-  const inFulfillmentOrders = orders.filter((o) => o.status === 'Claimed');
-  const completedOrders = orders.filter((o) => o.status === 'Completed');
+  const totalGrossRevenue = orders
+    .filter((o) => o.paymentStatus === 'VERIFIED')
+    .reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
-  // Filtered Orders for Orders Page
+  const pendingVerificationOrders = orders.filter((o) => o.paymentStatus === 'VERIFICATION_PENDING');
+  const verifiedOrders = orders.filter((o) => o.paymentStatus === 'VERIFIED');
+  const unclaimedOrders = orders.filter((o) => o.paymentStatus === 'VERIFIED' && o.fulfillmentStatus === 'PENDING');
+  const inFulfillmentOrders = orders.filter((o) => o.fulfillmentStatus === 'CLAIMED');
+  const completedOrders = orders.filter((o) => o.fulfillmentStatus === 'DISPATCHED');
+
   const filteredOrders = orders.filter((ord) => {
     const matchesSearch = 
       ord.id.toLowerCase().includes(searchOrder.toLowerCase()) ||
@@ -300,10 +420,12 @@ export default function AdminDashboardPage() {
       ord.gameName.toLowerCase().includes(searchOrder.toLowerCase());
 
     const matchesGame = selectedGameFilter === 'All' || ord.gameName.toLowerCase().includes(selectedGameFilter.toLowerCase());
-    return matchesSearch && matchesGame;
+    const matchesPayment = selectedPaymentStatusFilter === 'All' || ord.paymentStatus === selectedPaymentStatusFilter;
+
+    return matchesSearch && matchesGame && matchesPayment;
   });
 
-  const gamesList = ['All', 'Valorant', 'CS2', 'Escape from Tarkov', 'Fortnite', 'Apex Legends', 'Delta Force'];
+  const gamesList = ['All', 'Valorant', 'CS2', 'Escape from Tarkov', 'Fortnite', 'Apex Legends', 'ARC Raiders', 'Spoofers'];
 
   const filteredCustomers = customers.filter((customer) => {
     const query = searchCustomer.trim().toLowerCase();
@@ -319,13 +441,10 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-[100dvh] flex bg-[#03060c] text-slate-100 font-sans -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
       
-      {/* ======================================================== */}
-      {/* 1. LEFT SHRINKABLE / COLLAPSIBLE SIDEBAR NAVBAR           */}
-      {/* ======================================================== */}
+      {/* 1. LEFT SHRINKABLE SIDEBAR NAVBAR */}
       <aside 
         className="sticky top-0 hidden h-screen w-[76px] flex-col justify-between overflow-hidden border-r border-white/[0.07] bg-[linear-gradient(180deg,rgba(13,17,27,0.98)_0%,rgba(7,10,17,0.99)_100%)] shadow-[18px_0_60px_rgba(0,0,0,0.2)] backdrop-blur-2xl z-30 flex-shrink-0 md:flex"
       >
-        {/* Brand */}
         <div className="border-b border-white/[0.07] px-2 py-4">
           <div className="flex items-center justify-center">
             <div className="flex h-12 w-12 items-center justify-center">
@@ -334,270 +453,228 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Navigation Items (4 Distinct Pages) */}
-        <nav className="flex-1 overflow-y-auto px-3 py-5 font-sans" aria-label="Admin navigation">
-          <div className="space-y-1.5">
-          
-          {/* 1. Overview Page */}
+        <nav className="flex-1 overflow-y-auto px-3 py-5 font-sans space-y-1.5" aria-label="Admin navigation">
+          {/* Overview */}
           <button
             onClick={() => setActiveTab('overview')}
-            className={`group relative w-full flex items-center justify-center overflow-hidden rounded-[14px] px-2.5 py-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 cursor-pointer ${
+            className={`group relative w-full flex items-center justify-center rounded-[14px] p-2.5 text-[13px] transition-colors cursor-pointer ${
               activeTab === 'overview'
-                ? 'border border-blue-400/20 bg-[linear-gradient(90deg,rgba(59,130,246,0.18),rgba(255,255,255,0.055))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.18)]'
+                ? 'border border-blue-400/20 bg-blue-500/15 text-white'
                 : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
             }`}
             title="Overview"
-            aria-current={activeTab === 'overview' ? 'page' : undefined}
           >
-            {activeTab === 'overview' && <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]" />}
-            <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border transition-colors ${activeTab === 'overview' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] bg-white/[0.025] text-slate-500 group-hover:text-slate-300'}`}>
-              <LayoutDashboard className="h-4 w-4" strokeWidth={1.8} />
+            <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border ${activeTab === 'overview' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] text-slate-500 group-hover:text-slate-300'}`}>
+              <LayoutDashboard className="h-4 w-4" />
             </span>
           </button>
 
-          {/* 2. Orders Page */}
+          {/* Orders */}
           <button
             onClick={() => setActiveTab('orders')}
-            className={`group relative w-full flex items-center justify-center overflow-hidden rounded-[14px] px-2.5 py-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 cursor-pointer ${
+            className={`group relative w-full flex items-center justify-center rounded-[14px] p-2.5 text-[13px] transition-colors cursor-pointer ${
               activeTab === 'orders'
-                ? 'border border-blue-400/20 bg-[linear-gradient(90deg,rgba(59,130,246,0.18),rgba(255,255,255,0.055))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.18)]'
+                ? 'border border-blue-400/20 bg-blue-500/15 text-white'
                 : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
             }`}
-            title="Orders"
-            aria-current={activeTab === 'orders' ? 'page' : undefined}
+            title="Orders & Manual Verification"
           >
-            <div className="flex items-center gap-3">
-              {activeTab === 'orders' && <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]" />}
-              <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border transition-colors ${activeTab === 'orders' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] bg-white/[0.025] text-slate-500 group-hover:text-slate-300'}`}>
-                <Layers className="h-4 w-4" strokeWidth={1.8} />
-              </span>
-            </div>
+            <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border relative ${activeTab === 'orders' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] text-slate-500 group-hover:text-slate-300'}`}>
+              <Layers className="h-4 w-4" />
+              {pendingVerificationOrders.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+              )}
+            </span>
           </button>
 
-          {/* 3. Tickets Page */}
+          {/* Tickets */}
           <button
             onClick={() => setActiveTab('tickets')}
-            className={`group relative w-full flex items-center justify-center overflow-hidden rounded-[14px] px-2.5 py-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 cursor-pointer ${
+            className={`group relative w-full flex items-center justify-center rounded-[14px] p-2.5 text-[13px] transition-colors cursor-pointer ${
               activeTab === 'tickets'
-                ? 'border border-blue-400/20 bg-[linear-gradient(90deg,rgba(59,130,246,0.18),rgba(255,255,255,0.055))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.18)]'
+                ? 'border border-blue-400/20 bg-blue-500/15 text-white'
                 : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
             }`}
             title="Support Tickets"
-            aria-current={activeTab === 'tickets' ? 'page' : undefined}
           >
-            <div className="flex items-center gap-3">
-              {activeTab === 'tickets' && <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]" />}
-              <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border transition-colors ${activeTab === 'tickets' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] bg-white/[0.025] text-slate-500 group-hover:text-slate-300'}`}>
-                <MessageSquare className="h-4 w-4" strokeWidth={1.8} />
-              </span>
-            </div>
-          </button>
-
-          {/* 4. Customers Page */}
-          <button
-            onClick={() => setActiveTab('customers')}
-            className={`group relative w-full flex items-center justify-center overflow-hidden rounded-[14px] px-2.5 py-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 cursor-pointer ${
-              activeTab === 'customers'
-                ? 'border border-blue-400/20 bg-[linear-gradient(90deg,rgba(59,130,246,0.18),rgba(255,255,255,0.055))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.18)]'
-                : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
-            }`}
-            title="Customers"
-            aria-current={activeTab === 'customers' ? 'page' : undefined}
-          >
-            {activeTab === 'customers' && <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]" />}
-            <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border transition-colors ${activeTab === 'customers' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] bg-white/[0.025] text-slate-500 group-hover:text-slate-300'}`}>
-              <Contact className="h-4 w-4" strokeWidth={1.8} />
+            <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border ${activeTab === 'tickets' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] text-slate-500 group-hover:text-slate-300'}`}>
+              <MessageSquare className="h-4 w-4" />
             </span>
           </button>
 
-          {/* 5. Team Page (Super Admin Only) */}
+          {/* Customers */}
+          <button
+            onClick={() => setActiveTab('customers')}
+            className={`group relative w-full flex items-center justify-center rounded-[14px] p-2.5 text-[13px] transition-colors cursor-pointer ${
+              activeTab === 'customers'
+                ? 'border border-blue-400/20 bg-blue-500/15 text-white'
+                : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
+            }`}
+            title="Customer Directory"
+          >
+            <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border ${activeTab === 'customers' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] text-slate-500 group-hover:text-slate-300'}`}>
+              <Contact className="h-4 w-4" />
+            </span>
+          </button>
+
+          {/* Payment Settings */}
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`group relative w-full flex items-center justify-center rounded-[14px] p-2.5 text-[13px] transition-colors cursor-pointer ${
+              activeTab === 'settings'
+                ? 'border border-blue-400/20 bg-blue-500/15 text-white'
+                : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
+            }`}
+            title="Payment Methods & Deposit Addresses"
+          >
+            <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border ${activeTab === 'settings' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] text-slate-500 group-hover:text-slate-300'}`}>
+              <Settings className="h-4 w-4" />
+            </span>
+          </button>
+
+          {/* Team (Super Admin) */}
           {currentAdmin?.role === 'superadmin' && (
             <button
               onClick={() => setActiveTab('team')}
-              className={`group relative w-full flex items-center justify-center overflow-hidden rounded-[14px] px-2.5 py-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 cursor-pointer ${
+              className={`group relative w-full flex items-center justify-center rounded-[14px] p-2.5 text-[13px] transition-colors cursor-pointer ${
                 activeTab === 'team'
-                  ? 'border border-blue-400/20 bg-[linear-gradient(90deg,rgba(59,130,246,0.18),rgba(255,255,255,0.055))] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_24px_rgba(0,0,0,0.18)]'
+                  ? 'border border-blue-400/20 bg-blue-500/15 text-white'
                   : 'border border-transparent text-slate-500 hover:bg-white/[0.045] hover:text-slate-200'
               }`}
               title="Team Management"
-              aria-current={activeTab === 'team' ? 'page' : undefined}
             >
-              <div className="flex items-center gap-3">
-                {activeTab === 'team' && <span className="absolute inset-y-2 right-0 w-0.5 rounded-l-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.8)]" />}
-                <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[10px] border transition-colors ${activeTab === 'team' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] bg-white/[0.025] text-slate-500 group-hover:text-slate-300'}`}>
-                  <Users className="h-4 w-4" strokeWidth={1.8} />
-                </span>
-              </div>
+              <span className={`flex h-8 w-8 items-center justify-center rounded-[10px] border ${activeTab === 'team' ? 'border-blue-300/20 bg-blue-400/10 text-blue-200' : 'border-white/[0.06] text-slate-500 group-hover:text-slate-300'}`}>
+                <Users className="h-4 w-4" />
+              </span>
             </button>
           )}
-          </div>
         </nav>
 
-        {/* Bottom Left Profile & Settings Button */}
+        {/* Profile Button */}
         <div className="border-t border-white/[0.07] p-3 font-sans">
           <button
             onClick={() => setShowProfileModal(true)}
-            className="w-full rounded-[14px] border border-white/[0.075] bg-white/[0.035] p-1.5 transition-colors hover:border-white/[0.13] hover:bg-white/[0.065] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 cursor-pointer flex items-center justify-center"
+            className="w-full rounded-[14px] border border-white/[0.075] bg-white/[0.035] p-1.5 transition-colors hover:bg-white/[0.065] cursor-pointer flex items-center justify-center"
             title="Profile & Password Settings"
           >
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[11px] border border-blue-400/20 bg-blue-400/10 text-blue-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-              <User className="h-[18px] w-[18px]" strokeWidth={1.8} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-[11px] border border-blue-400/20 bg-blue-400/10 text-blue-300">
+              <User className="h-[18px] w-[18px]" />
             </div>
           </button>
         </div>
-
       </aside>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
-        <nav
-          className="mx-auto flex w-full max-w-md items-center justify-around rounded-[20px] border border-white/[0.09] bg-[linear-gradient(180deg,rgba(18,22,32,0.96),rgba(8,11,18,0.98))] p-2 shadow-[0_-16px_50px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-2xl"
-          aria-label="Mobile admin navigation"
-        >
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`relative flex h-12 min-w-12 flex-1 items-center justify-center rounded-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 ${activeTab === 'overview' ? 'bg-blue-400/12 text-blue-200' : 'text-slate-500 active:bg-white/[0.05]'}`}
-            title="Overview"
-            aria-label="Overview"
-            aria-current={activeTab === 'overview' ? 'page' : undefined}
-          >
-            {activeTab === 'overview' && <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.75)]" />}
-            <LayoutDashboard className="h-5 w-5" strokeWidth={1.8} />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`relative flex h-12 min-w-12 flex-1 items-center justify-center rounded-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 ${activeTab === 'orders' ? 'bg-blue-400/12 text-blue-200' : 'text-slate-500 active:bg-white/[0.05]'}`}
-            title="Orders"
-            aria-label="Orders"
-            aria-current={activeTab === 'orders' ? 'page' : undefined}
-          >
-            {activeTab === 'orders' && <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.75)]" />}
-            <Layers className="h-5 w-5" strokeWidth={1.8} />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('tickets')}
-            className={`relative flex h-12 min-w-12 flex-1 items-center justify-center rounded-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 ${activeTab === 'tickets' ? 'bg-blue-400/12 text-blue-200' : 'text-slate-500 active:bg-white/[0.05]'}`}
-            title="Support Desk"
-            aria-label="Support Desk"
-            aria-current={activeTab === 'tickets' ? 'page' : undefined}
-          >
-            {activeTab === 'tickets' && <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.75)]" />}
-            <MessageSquare className="h-5 w-5" strokeWidth={1.8} />
-          </button>
-
-          <button
-            onClick={() => setActiveTab('customers')}
-            className={`relative flex h-12 min-w-12 flex-1 items-center justify-center rounded-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 ${activeTab === 'customers' ? 'bg-blue-400/12 text-blue-200' : 'text-slate-500 active:bg-white/[0.05]'}`}
-            title="Customers"
-            aria-label="Customers"
-            aria-current={activeTab === 'customers' ? 'page' : undefined}
-          >
-            {activeTab === 'customers' && <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.75)]" />}
-            <Contact className="h-5 w-5" strokeWidth={1.8} />
-          </button>
-
-          {currentAdmin?.role === 'superadmin' && (
-            <button
-              onClick={() => setActiveTab('team')}
-              className={`relative flex h-12 min-w-12 flex-1 items-center justify-center rounded-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70 ${activeTab === 'team' ? 'bg-blue-400/12 text-blue-200' : 'text-slate-500 active:bg-white/[0.05]'}`}
-              title="Team"
-              aria-label="Team"
-              aria-current={activeTab === 'team' ? 'page' : undefined}
-            >
-              {activeTab === 'team' && <span className="absolute inset-x-4 top-0 h-0.5 rounded-b-full bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.75)]" />}
-              <Users className="h-5 w-5" strokeWidth={1.8} />
-            </button>
-          )}
-
-          <button
-            onClick={() => setShowProfileModal(true)}
-            className="relative flex h-12 min-w-12 flex-1 items-center justify-center rounded-[14px] text-slate-500 transition-colors active:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/70"
-            title="Profile"
-            aria-label="Profile and password settings"
-          >
-            <User className="h-5 w-5" strokeWidth={1.8} />
-          </button>
-        </nav>
-      </div>
-
-      {/* ======================================================== */}
-      {/* 2. MAIN CONTENT VIEW (STRICT PAGE ISOLATION)             */}
-      {/* ======================================================== */}
-      <main className="mx-auto min-w-0 max-w-7xl flex-1 space-y-6 overflow-y-auto p-4 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:space-y-8 md:p-8 md:pb-8 lg:p-10">
+      {/* 2. MAIN CONTENT STAGE */}
+      <main className="flex-1 min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-8">
         
         {/* ======================================================== */}
-        {/* PAGE 1: OVERVIEW & STATS                                 */}
+        {/* PAGE 1: OVERVIEW                                         */}
         {/* ======================================================== */}
         {activeTab === 'overview' && (
-          <div className="space-y-8">
-            
-            {/* Clean Header Banner */}
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-black font-display tracking-tight text-white uppercase">
-                System <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-sky-300 to-blue-500">Overview.</span>
-              </h1>
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
+                  Telemetry <span className="text-blue-400">Overview</span>
+                </h1>
+                <p className="text-xs text-slate-400 font-mono mt-1">
+                  Live metrics for manual payments, order queue, and software dispatch
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchDashboardData}
+                  className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-300 flex items-center gap-2 transition-all cursor-pointer"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  <span>Refresh Stream</span>
+                </button>
+              </div>
             </div>
 
-            {/* 4 Core Financial & Fulfillment KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              
-              <div className="p-6 rounded-3xl bg-[#060913]/90 border border-blue-500/30 space-y-2 shadow-xl">
+            {/* Metrics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-6 rounded-3xl bg-[#060913]/90 border border-emerald-500/30 space-y-2 shadow-xl">
                 <div className="flex items-center justify-between text-zinc-400 text-xs font-mono">
-                  <span>Gross Sales Volume</span>
-                  <DollarSign className="h-4 w-4 text-blue-400" />
+                  <span>Verified Revenue</span>
+                  <DollarSign className="h-4 w-4 text-emerald-400" />
                 </div>
-                <div className="text-3xl font-black font-display text-white">
-                  $0.00
+                <div className="text-3xl font-black font-display text-emerald-400">
+                  ${totalGrossRevenue.toFixed(2)}
                 </div>
+                <div className="text-[11px] text-zinc-500 font-mono">Manual on-chain / gift cards</div>
               </div>
 
               <div className="p-6 rounded-3xl bg-[#060913]/90 border border-amber-500/30 space-y-2 shadow-xl">
                 <div className="flex items-center justify-between text-zinc-400 text-xs font-mono">
-                  <span>Pending Fulfillment</span>
+                  <span>Payment Verification Queue</span>
                   <Clock className="h-4 w-4 text-amber-400 animate-spin" />
                 </div>
                 <div className="text-3xl font-black font-display text-amber-300">
-                  {unclaimedOrders.length}
+                  {pendingVerificationOrders.length}
                 </div>
+                <div className="text-[11px] text-amber-400 font-mono">Awaiting staff review</div>
               </div>
 
               <div className="p-6 rounded-3xl bg-[#060913]/90 border border-sky-500/30 space-y-2 shadow-xl">
                 <div className="flex items-center justify-between text-zinc-400 text-xs font-mono">
-                  <span>Attended by Staff</span>
+                  <span>Ready for Fulfillment</span>
                   <UserCheck className="h-4 w-4 text-sky-400" />
                 </div>
                 <div className="text-3xl font-black font-display text-sky-300">
-                  {inFulfillmentOrders.length}
+                  {unclaimedOrders.length}
                 </div>
+                <div className="text-[11px] text-zinc-500 font-mono">Verified & unclaimed</div>
               </div>
 
-              <div className="p-6 rounded-3xl bg-[#060913]/90 border border-emerald-500/30 space-y-2 shadow-xl">
+              <div className="p-6 rounded-3xl bg-[#060913]/90 border border-purple-500/30 space-y-2 shadow-xl">
                 <div className="flex items-center justify-between text-zinc-400 text-xs font-mono">
                   <span>Completed Dispatches</span>
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 text-purple-400" />
                 </div>
-                <div className="text-3xl font-black font-display text-emerald-300">
+                <div className="text-3xl font-black font-display text-purple-300">
                   {completedOrders.length}
                 </div>
+                <div className="text-[11px] text-zinc-500 font-mono">Delivered to customers</div>
               </div>
-
             </div>
 
-            {/* Recent Transactions */}
+            {/* Quick Actions / Recent Orders Preview */}
             <div className="p-6 rounded-3xl bg-[#060913]/95 border border-white/10 space-y-4 shadow-xl">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <h3 className="font-display font-bold text-sm text-white uppercase tracking-wider">
-                  Recent Transactions
+                  Recent Orders & Verification Requests
                 </h3>
                 <button
                   onClick={() => setActiveTab('orders')}
-                  className="flex flex-shrink-0 items-center gap-1 whitespace-nowrap text-xs font-mono text-blue-400 hover:text-blue-300 cursor-pointer"
+                  className="flex items-center gap-1 text-xs font-mono text-blue-400 hover:text-blue-300 cursor-pointer"
                 >
-                  <span>View All Orders</span>
+                  <span>Open Full Orders Queue</span>
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
+              </div>
+
+              <div className="divide-y divide-white/5">
+                {orders.slice(0, 5).map((ord) => (
+                  <div key={ord.id} className="py-3 flex items-center justify-between text-xs font-mono">
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-white">{ord.id}</span>
+                      <span className="text-slate-400">{ord.gameName} ({ord.planTier})</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        ord.paymentStatus === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400' :
+                        ord.paymentStatus === 'REJECTED' ? 'bg-rose-500/20 text-rose-400' :
+                        'bg-amber-500/20 text-amber-300'
+                      }`}>
+                        {ord.paymentStatus === 'VERIFIED' ? 'Payment Verified' :
+                         ord.paymentStatus === 'REJECTED' ? 'Payment Rejected' : 'Verification Pending'}
+                      </span>
+                      <span className="text-white font-bold">${ord.amount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -605,20 +682,22 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ======================================================== */}
-        {/* PAGE 2: ORDERS PROCESSING & 3RD PARTY KANBAN             */}
+        {/* PAGE 2: ORDERS PROCESSING & VERIFICATION QUEUE           */}
         {/* ======================================================== */}
         {activeTab === 'orders' && (
           <div className="space-y-6">
             
-            {/* Header */}
+            {/* Header & Filter Controls */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
-                  Order <span className="text-blue-400">Management System</span>
+                  Order <span className="text-blue-400">Operations & Verification</span>
                 </h1>
+                <p className="text-xs text-slate-400 font-mono mt-1">
+                  Manual payment proof verification and 3rd-party license dispatch
+                </p>
               </div>
 
-              {/* Search & Filter Bar */}
               <div className="flex items-center gap-2">
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-blue-400" />
@@ -626,7 +705,7 @@ export default function AdminDashboardPage() {
                     type="text"
                     value={searchOrder}
                     onChange={(e) => setSearchOrder(e.target.value)}
-                    placeholder="Search orders, SKU..."
+                    placeholder="Search order ID, email, game..."
                     className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -641,82 +720,120 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {/* Game Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-              {gamesList.map((g) => (
-                <button
-                  key={g}
-                  onClick={() => setSelectedGameFilter(g)}
-                  className={`px-3 py-1 rounded-xl text-xs font-mono whitespace-nowrap transition-all cursor-pointer ${
-                    selectedGameFilter === g
-                      ? 'bg-blue-600 text-white font-bold shadow-md'
-                      : 'bg-black/50 border border-white/10 text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
+            {/* Filter Strips */}
+            <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                <span className="text-zinc-500 mr-1">Game:</span>
+                {gamesList.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setSelectedGameFilter(g)}
+                    className={`px-3 py-1 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
+                      selectedGameFilter === g
+                        ? 'bg-blue-600 text-white font-bold shadow-md'
+                        : 'bg-black/50 border border-white/10 text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-zinc-500 mr-1">Payment:</span>
+                {['All', 'VERIFICATION_PENDING', 'VERIFIED', 'REJECTED'].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => setSelectedPaymentStatusFilter(st)}
+                    className={`px-2.5 py-1 rounded-xl whitespace-nowrap text-[11px] transition-all cursor-pointer ${
+                      selectedPaymentStatusFilter === st
+                        ? 'bg-emerald-600 text-white font-bold shadow-md'
+                        : 'bg-black/50 border border-white/10 text-zinc-400 hover:text-white'
+                    }`}
+                  >
+                    {st === 'VERIFICATION_PENDING' ? 'Pending Review' :
+                     st === 'VERIFIED' ? 'Verified' :
+                     st === 'REJECTED' ? 'Rejected' : 'All'}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* 3-Column Kanban Board */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
               
-              {/* Column 1: New Orders (Unclaimed) */}
+              {/* Column 1: New / Unclaimed Orders */}
               <div className="rounded-3xl bg-[#060913]/90 border border-amber-500/25 p-5 space-y-4 shadow-2xl">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#f59e0b]" />
                     <h3 className="font-display font-bold text-xs text-white uppercase tracking-wider">
-                      1. New Orders
+                      1. Queue & Unclaimed
                     </h3>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                    {filteredOrders.filter((o) => o.status === 'Pending').length}
+                    {filteredOrders.filter((o) => o.fulfillmentStatus === 'PENDING').length}
                   </span>
                 </div>
 
                 <div className="space-y-3 min-h-[300px]">
-                  {filteredOrders.filter((o) => o.status === 'Pending').length === 0 ? (
+                  {filteredOrders.filter((o) => o.fulfillmentStatus === 'PENDING').length === 0 ? (
                     <div className="py-14 text-center text-xs font-mono text-zinc-600 border border-dashed border-white/10 rounded-2xl">
                       Queue empty
                     </div>
                   ) : (
-                    filteredOrders.filter((o) => o.status === 'Pending').map((ord) => (
+                    filteredOrders.filter((o) => o.fulfillmentStatus === 'PENDING').map((ord) => (
                       <div
                         key={ord.id}
-                        className="p-4 rounded-2xl bg-[#04060c] border border-amber-500/20 hover:border-amber-500/50 transition-all space-y-3 shadow-md"
+                        className="p-4 rounded-2xl bg-[#04060c] border border-white/10 hover:border-white/20 transition-all space-y-3 shadow-md"
                       >
                         <div className="flex items-center justify-between text-xs font-mono">
                           <span className="font-black text-amber-400">{ord.id}</span>
-                          <span className="text-zinc-500 text-[11px]">{ord.createdAt}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            ord.paymentStatus === 'VERIFIED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                            ord.paymentStatus === 'REJECTED' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                            'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          }`}>
+                            {ord.paymentStatus === 'VERIFIED' ? 'Verified' :
+                             ord.paymentStatus === 'REJECTED' ? 'Rejected' : 'Review Pending'}
+                          </span>
                         </div>
 
                         <div>
                           <div className="text-sm font-bold font-display text-white">{ord.gameName}</div>
-                          <div className="text-xs text-amber-300 font-mono font-semibold">{ord.planTier} • ${ord.amount.toFixed(2)}</div>
+                          <div className="text-xs text-zinc-300 font-mono">{ord.planTier} • ${ord.amount.toFixed(2)}</div>
                         </div>
 
                         <div className="p-2.5 rounded-xl bg-black/60 border border-white/5 text-[11px] font-mono text-zinc-400 truncate">
                           Customer: <span className="text-white">{ord.customerEmail}</span>
                         </div>
 
+                        {/* Action buttons */}
                         <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
                           <button
-                            onClick={() => handleCopyOrderSpec(ord)}
-                            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-mono flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Copy spec for 3rd-party purchasing"
+                            onClick={() => setProofModalOrder(ord)}
+                            className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-blue-400 hover:text-blue-300 text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-500/20"
                           >
-                            <Copy className="h-3 w-3" />
-                            <span>{copiedOrderId === ord.id ? 'Copied' : 'Copy SKU'}</span>
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>Proof</span>
                           </button>
 
-                          <button
-                            onClick={() => handleToggleClaim(ord.id, false)}
-                            className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-                          >
-                            <UserCheck className="h-3.5 w-3.5" />
-                            <span>Claim</span>
-                          </button>
+                          {ord.paymentStatus === 'VERIFIED' ? (
+                            <button
+                              onClick={() => handleToggleClaim(ord.id, false)}
+                              className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                            >
+                              <UserCheck className="h-3.5 w-3.5" />
+                              <span>Claim</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setProofModalOrder(ord)}
+                              className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-[11px] font-bold cursor-pointer hover:bg-amber-500/20"
+                            >
+                              Verify First
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))
@@ -734,32 +851,29 @@ export default function AdminDashboardPage() {
                     </h3>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30">
-                    {filteredOrders.filter((o) => o.status === 'Claimed').length}
+                    {filteredOrders.filter((o) => o.fulfillmentStatus === 'CLAIMED').length}
                   </span>
                 </div>
 
                 <div className="space-y-3 min-h-[300px]">
-                  {filteredOrders.filter((o) => o.status === 'Claimed').length === 0 ? (
+                  {filteredOrders.filter((o) => o.fulfillmentStatus === 'CLAIMED').length === 0 ? (
                     <div className="py-14 text-center text-xs font-mono text-zinc-600 border border-dashed border-white/10 rounded-2xl">
                       No claimed orders
                     </div>
                   ) : (
-                    filteredOrders.filter((o) => o.status === 'Claimed').map((ord) => (
+                    filteredOrders.filter((o) => o.fulfillmentStatus === 'CLAIMED').map((ord) => (
                       <div
                         key={ord.id}
-                        className="p-4 rounded-2xl bg-[#04060c] border border-sky-500/30 hover:border-sky-500/60 transition-all space-y-3 shadow-md"
+                        className="p-4 rounded-2xl bg-[#04060c] border border-sky-500/30 space-y-3 shadow-md"
                       >
                         <div className="flex items-center justify-between text-xs font-mono">
                           <span className="font-black text-sky-400">{ord.id}</span>
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 text-[10px] font-bold border border-sky-500/30">
-                            <UserCheck className="h-3 w-3" />
-                            <span>{ord.claimedBy || 'Staff'}</span>
-                          </div>
+                          <span className="text-zinc-500 text-[11px]">Staff: {ord.claimedBy || 'Assigned'}</span>
                         </div>
 
                         <div>
                           <div className="text-sm font-bold font-display text-white">{ord.gameName}</div>
-                          <div className="text-xs text-sky-300 font-mono font-semibold">{ord.planTier} • ${ord.amount.toFixed(2)}</div>
+                          <div className="text-xs text-sky-300 font-mono">{ord.planTier} • ${ord.amount.toFixed(2)}</div>
                         </div>
 
                         <div className="p-2.5 rounded-xl bg-black/60 border border-white/5 text-[11px] font-mono text-zinc-400 truncate">
@@ -768,23 +882,28 @@ export default function AdminDashboardPage() {
 
                         <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
                           <button
-                            onClick={() => handleToggleClaim(ord.id, true)}
-                            className="text-zinc-400 hover:text-zinc-200 text-xs font-mono transition-colors cursor-pointer"
+                            onClick={() => handleCopyOrderSpec(ord)}
+                            className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-mono flex items-center gap-1 transition-colors cursor-pointer"
                           >
-                            Release
+                            <Copy className="h-3 w-3" />
+                            <span>{copiedOrderId === ord.id ? 'Copied' : 'Copy SKU'}</span>
                           </button>
 
-                          <button
-                            onClick={() => {
-                              setSelectedOrder(ord);
-                              setCustomKey('');
-                              setDispatchNotes('');
-                            }}
-                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-                          >
-                            <span>Dispatch Key</span>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleClaim(ord.id, true)}
+                              className="px-2 py-1 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-mono transition-all cursor-pointer"
+                            >
+                              Release
+                            </button>
+                            <button
+                              onClick={() => setSelectedOrder(ord)}
+                              className="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-black font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                            >
+                              <Key className="h-3.5 w-3.5" />
+                              <span>Dispatch</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -792,27 +911,27 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              {/* Column 3: Dispatched & Delivered */}
+              {/* Column 3: Delivered Orders */}
               <div className="rounded-3xl bg-[#060913]/90 border border-emerald-500/25 p-5 space-y-4 shadow-2xl">
                 <div className="flex items-center justify-between pb-3 border-b border-white/10">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#10b981]" />
                     <h3 className="font-display font-bold text-xs text-white uppercase tracking-wider">
-                      3. Delivered
+                      3. Dispatched & Delivered
                     </h3>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                    {filteredOrders.filter((o) => o.status === 'Completed').length}
+                    {filteredOrders.filter((o) => o.fulfillmentStatus === 'DISPATCHED').length}
                   </span>
                 </div>
 
                 <div className="space-y-3 min-h-[300px]">
-                  {filteredOrders.filter((o) => o.status === 'Completed').length === 0 ? (
+                  {filteredOrders.filter((o) => o.fulfillmentStatus === 'DISPATCHED').length === 0 ? (
                     <div className="py-14 text-center text-xs font-mono text-zinc-600 border border-dashed border-white/10 rounded-2xl">
-                      No completed orders yet
+                      No dispatched orders
                     </div>
                   ) : (
-                    filteredOrders.filter((o) => o.status === 'Completed').map((ord) => (
+                    filteredOrders.filter((o) => o.fulfillmentStatus === 'DISPATCHED').map((ord) => (
                       <div
                         key={ord.id}
                         className="p-4 rounded-2xl bg-[#04060c] border border-emerald-500/20 space-y-3 shadow-md"
@@ -834,8 +953,8 @@ export default function AdminDashboardPage() {
                         )}
 
                         <div className="pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-zinc-400">
-                          <span>Dispatched by: <strong className="text-white">{ord.claimedBy || 'System'}</strong></span>
-                          <span className="text-emerald-400 font-bold">Delivered</span>
+                          <span>By: <strong className="text-white">{ord.dispatchedBy || ord.claimedBy || 'Staff'}</strong></span>
+                          <span className="text-emerald-400 font-bold">Dispatched</span>
                         </div>
                       </div>
                     ))
@@ -849,11 +968,264 @@ export default function AdminDashboardPage() {
         )}
 
         {/* ======================================================== */}
-        {/* PAGE 3: SUPPORT TICKETS & HWID DESK                      */}
+        {/* PAGE 3: PAYMENT SETTINGS                                 */}
+        {/* ======================================================== */}
+        {activeTab === 'settings' && (
+          <div className="space-y-6 max-w-4xl">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
+                Payment <span className="text-blue-400">Gateway Settings</span>
+              </h1>
+              <p className="text-xs text-slate-400 font-mono mt-1">
+                Configure public deposit addresses, QR images, and external gift card vendors
+              </p>
+            </div>
+
+            <form onSubmit={handleSavePaymentSettings} className="p-6 sm:p-8 rounded-3xl bg-[#060913]/95 border border-white/10 shadow-2xl space-y-6">
+              
+              {settingsSuccess && (
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Payment settings updated successfully!</span>
+                </div>
+              )}
+
+              {settingsError && (
+                <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-mono flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span>{settingsError}</span>
+                </div>
+              )}
+
+              {/* BTC Settings */}
+              <div className="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-amber-400 font-bold font-display text-sm">
+                  <Bitcoin className="h-5 w-5" />
+                  <span>Bitcoin (BTC) Configuration</span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase text-zinc-400">BTC Public Deposit Address</label>
+                  <input
+                    type="text"
+                    value={paymentSettings.btcAddress}
+                    onChange={(e) => setPaymentSettings({ ...paymentSettings, btcAddress: e.target.value })}
+                    placeholder="e.g. bc1q..."
+                    className="w-full p-3 rounded-xl bg-black/60 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase text-zinc-400">BTC QR Code Image</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={paymentSettings.btcQrUrl || ''}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, btcQrUrl: e.target.value })}
+                      placeholder="/uploads/qr/btc-qr.png"
+                      className="flex-1 p-2.5 rounded-xl bg-black/60 border border-white/10 text-white text-xs font-mono"
+                    />
+                    <label className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold cursor-pointer transition-colors flex items-center gap-1.5">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{uploadingQr === 'btcQrUrl' ? 'Uploading...' : 'Upload QR'}</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => e.target.files?.[0] && handleQrUpload('btcQrUrl', e.target.files[0])}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* SOL Settings */}
+              <div className="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-blue-400 font-bold font-display text-sm">
+                  <Coins className="h-5 w-5" />
+                  <span>Solana (SOL) Configuration</span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase text-zinc-400">SOL Public Deposit Address</label>
+                  <input
+                    type="text"
+                    value={paymentSettings.solAddress}
+                    onChange={(e) => setPaymentSettings({ ...paymentSettings, solAddress: e.target.value })}
+                    placeholder="e.g. L..."
+                    className="w-full p-3 rounded-xl bg-black/60 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-blue-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase text-zinc-400">SOL QR Code Image</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={paymentSettings.solQrUrl || ''}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, solQrUrl: e.target.value })}
+                      placeholder="/uploads/qr/ltc-qr.png"
+                      className="flex-1 p-2.5 rounded-xl bg-black/60 border border-white/10 text-white text-xs font-mono"
+                    />
+                    <label className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold cursor-pointer transition-colors flex items-center gap-1.5">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{uploadingQr === 'solQrUrl' ? 'Uploading...' : 'Upload QR'}</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => e.target.files?.[0] && handleQrUpload('solQrUrl', e.target.files[0])}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* USDT TRC20 Settings */}
+              <div className="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-emerald-400 font-bold font-display text-sm">
+                  <Coins className="h-5 w-5" />
+                  <span>USDT (TRC-20) Configuration</span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase text-zinc-400">USDT TRC-20 Deposit Address</label>
+                  <input
+                    type="text"
+                    value={paymentSettings.usdtTrc20Address}
+                    onChange={(e) => setPaymentSettings({ ...paymentSettings, usdtTrc20Address: e.target.value })}
+                    placeholder="e.g. T..."
+                    className="w-full p-3 rounded-xl bg-black/60 border border-white/10 text-white text-xs font-mono focus:outline-none focus:border-emerald-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-mono uppercase text-zinc-400">USDT QR Code Image</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      value={paymentSettings.usdtTrc20QrUrl || ''}
+                      onChange={(e) => setPaymentSettings({ ...paymentSettings, usdtTrc20QrUrl: e.target.value })}
+                      placeholder="/uploads/qr/usdt-qr.png"
+                      className="flex-1 p-2.5 rounded-xl bg-black/60 border border-white/10 text-white text-xs font-mono"
+                    />
+                    <label className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-mono font-bold cursor-pointer transition-colors flex items-center gap-1.5">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{uploadingQr === 'usdtTrc20QrUrl' ? 'Uploading...' : 'Upload QR'}</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => e.target.files?.[0] && handleQrUpload('usdtTrc20QrUrl', e.target.files[0])}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gift Card Settings */}
+              <div className="p-5 rounded-2xl bg-black/40 border border-white/10 space-y-4">
+                <div className="flex items-center gap-2 text-purple-400 font-bold font-display text-sm">
+                  <CreditCard className="h-5 w-5" />
+                  <span>Approved G2A / Rewarble Gift Cards</span>
+                </div>
+
+                <p className="text-[11px] leading-relaxed text-zinc-400">
+                  Add only verified purchase pages. Checkout rounds each order up to a whole-dollar value and enables gift-card payment only when that exact denomination is configured.
+                </p>
+
+                <div className="space-y-3">
+                  {paymentSettings.giftCardLinks.map((link, index) => (
+                    <div key={`${link.denominationUsd}-${index}`} className="grid gap-2 sm:grid-cols-[120px_1fr_auto]">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-zinc-500">$</span>
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          aria-label={`Gift-card denomination ${index + 1}`}
+                          value={link.denominationUsd || ''}
+                          onChange={(e) => {
+                            const giftCardLinks = paymentSettings.giftCardLinks.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, denominationUsd: Number(e.target.value) } : item,
+                            );
+                            setPaymentSettings({ ...paymentSettings, giftCardLinks });
+                          }}
+                          placeholder="35"
+                          className="w-full rounded-xl border border-white/10 bg-black/60 py-3 pl-7 pr-3 font-mono text-xs text-white focus:border-purple-500 focus:outline-none"
+                          required
+                        />
+                      </div>
+                      <input
+                        type="url"
+                        aria-label={`Gift-card purchase URL ${index + 1}`}
+                        value={link.purchaseUrl}
+                        onChange={(e) => {
+                          const giftCardLinks = paymentSettings.giftCardLinks.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, purchaseUrl: e.target.value } : item,
+                          );
+                          setPaymentSettings({ ...paymentSettings, giftCardLinks });
+                        }}
+                        placeholder="https://www.g2a.com/..."
+                        className="w-full rounded-xl border border-white/10 bg-black/60 p-3 font-mono text-xs text-white focus:border-purple-500 focus:outline-none"
+                        required
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove gift-card link ${index + 1}`}
+                        onClick={() => setPaymentSettings({
+                          ...paymentSettings,
+                          giftCardLinks: paymentSettings.giftCardLinks.filter((_, itemIndex) => itemIndex !== index),
+                        })}
+                        className="inline-flex items-center justify-center rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 text-rose-400 transition-colors hover:bg-rose-500/20"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {paymentSettings.giftCardLinks.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-black/30 p-4 text-center font-mono text-[11px] text-zinc-500">
+                      No approved denominations. Gift-card checkout is safely disabled.
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setPaymentSettings({
+                      ...paymentSettings,
+                      giftCardLinks: [...paymentSettings.giftCardLinks, { denominationUsd: 0, purchaseUrl: '' }],
+                    })}
+                    className="inline-flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2.5 font-mono text-xs font-bold text-purple-300 transition-colors hover:bg-purple-500/20"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Approved Denomination
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={settingsSaving}
+                  className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all shadow-lg cursor-pointer disabled:opacity-50"
+                >
+                  {settingsSaving ? 'Saving Changes...' : 'Save Payment Gateway Settings'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* PAGE 4: SUPPORT TICKETS & HWID DESK                      */}
         {/* ======================================================== */}
         {activeTab === 'tickets' && (
           <div className="space-y-6">
-            
             <div>
               <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
                 Support <span className="text-blue-400">Desk</span>
@@ -861,7 +1233,6 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
               {/* Queue List */}
               <div className="lg:col-span-5 p-5 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-3 shadow-xl">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
@@ -904,27 +1275,15 @@ export default function AdminDashboardPage() {
               <div className="lg:col-span-7 p-6 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-4 shadow-xl">
                 {selectedTicket ? (
                   <div className="space-y-4">
-                    
-                    {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
                       <div>
-                        <div className="text-xs font-mono text-blue-400 font-bold">{selectedTicket.category} • {selectedTicket.id}</div>
+                        <div className="text-xs font-mono text-blue-400 font-bold">{selectedTicket.id}</div>
                         <h3 className="text-base font-bold text-white font-display">{selectedTicket.subject}</h3>
                         <div className="text-xs text-zinc-400 font-mono">Customer: {selectedTicket.customerEmail}</div>
                       </div>
 
-                      {selectedTicket.category === 'HWID Reset' && (
-                        <button
-                          onClick={() => handleApproveHwidReset(selectedTicket.id)}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold font-mono text-xs transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          <span>Approve HWID</span>
-                        </button>
-                      )}
                     </div>
 
-                    {/* Messages Thread */}
                     <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
                       {selectedTicket.messages.map((m) => (
                         <div
@@ -944,7 +1303,6 @@ export default function AdminDashboardPage() {
                       ))}
                     </div>
 
-                    {/* Reply Input */}
                     <form onSubmit={handleSendTicketReply} className="space-y-2 pt-2 border-t border-white/10">
                       <textarea
                         rows={3}
@@ -965,7 +1323,6 @@ export default function AdminDashboardPage() {
                         </button>
                       </div>
                     </form>
-
                   </div>
                 ) : (
                   <div className="py-20 text-center text-xs font-mono text-zinc-500">
@@ -973,14 +1330,12 @@ export default function AdminDashboardPage() {
                   </div>
                 )}
               </div>
-
             </div>
-
           </div>
         )}
 
         {/* ======================================================== */}
-        {/* PAGE 4: CUSTOMER DIRECTORY                               */}
+        {/* PAGE 5: CUSTOMER DIRECTORY                               */}
         {/* ======================================================== */}
         {activeTab === 'customers' && (
           <div className="space-y-6">
@@ -993,161 +1348,298 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" strokeWidth={1.8} />
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <input
                   type="search"
                   value={searchCustomer}
-                  onChange={(event) => setSearchCustomer(event.target.value)}
-                  placeholder="Search customers"
-                  aria-label="Search customers"
-                  className="w-full rounded-[14px] border border-white/[0.09] bg-white/[0.035] py-3 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-blue-400/50 focus:ring-2 focus:ring-blue-400/15"
+                  onChange={(e) => setSearchCustomer(e.target.value)}
+                  placeholder="Search by name, email, discord..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
 
-            {filteredCustomers.length === 0 ? (
-              <div className="rounded-[20px] border border-dashed border-white/[0.09] bg-white/[0.02] px-6 py-16 text-center">
-                <Contact className="mx-auto h-7 w-7 text-slate-700" strokeWidth={1.6} />
-                <p className="mt-3 text-sm font-medium text-slate-400">
-                  {customers.length === 0 ? 'No customers yet' : 'No customers match your search'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
-                {filteredCustomers.map((customer) => (
-                  <article
-                    key={customer.id}
-                    className="rounded-[18px] border border-white/[0.075] bg-[linear-gradient(145deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.045)]"
-                  >
-                    <div className="flex min-w-0 items-start gap-3">
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] border border-blue-400/15 bg-blue-400/[0.08] text-sm font-bold text-blue-200">
-                        {(customer.name || customer.email).charAt(0).toUpperCase()}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h2 className="truncate text-sm font-semibold text-slate-100">{customer.name}</h2>
-                        <p className="mt-0.5 truncate text-xs text-slate-500">{customer.email}</p>
-                      </div>
+            <div className="rounded-3xl bg-[#060913]/95 border border-white/10 shadow-2xl overflow-hidden">
+              <div className="divide-y divide-white/5">
+                {filteredCustomers.map((cust) => (
+                  <div key={cust.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                    <div>
+                      <div className="font-bold text-white text-sm">{cust.name}</div>
+                      <div className="text-slate-400">{cust.email}</div>
                     </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-3 text-xs">
-                      <div className="min-w-0">
-                        <div className="text-[10px] uppercase tracking-[0.1em] text-slate-600">Username</div>
-                        <div className="mt-1 truncate font-mono text-slate-300">{customer.username}</div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[10px] uppercase tracking-[0.1em] text-slate-600">Discord</div>
-                        <div className="mt-1 truncate font-mono text-slate-300">{customer.discordHandle || 'Not provided'}</div>
-                      </div>
+                    <div className="flex items-center gap-4 text-zinc-500">
+                      {cust.discordHandle && <span>Discord: <strong className="text-slate-300">{cust.discordHandle}</strong></span>}
+                      <span>Joined {new Date(cust.createdAt).toLocaleDateString()}</span>
                     </div>
-                  </article>
+                  </div>
                 ))}
               </div>
-            )}
+            </div>
           </div>
         )}
 
         {/* ======================================================== */}
-        {/* PAGE 5: TEAM MANAGEMENT (SUPER ADMIN ONLY)               */}
+        {/* PAGE 6: TEAM MANAGEMENT (SUPER ADMIN)                    */}
         {/* ======================================================== */}
         {activeTab === 'team' && currentAdmin?.role === 'superadmin' && (
-          <div className="p-6 sm:p-8 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-6 shadow-2xl">
-            
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl font-bold font-display text-white">Staff Team & Access Control</h1>
-                <p className="text-xs text-zinc-400 font-sans">Manage team members, roles, and administrative permissions.</p>
+                <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
+                  Staff <span className="text-blue-400">Team</span>
+                </h1>
+                <p className="text-xs text-slate-400 font-mono mt-1">Manage administrative accounts and credentials</p>
               </div>
 
               <button
                 onClick={() => setShowAddAdminModal(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.35)] cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
               >
                 <UserPlus className="h-4 w-4" />
-                <span>Add New Admin</span>
+                <span>Add Admin</span>
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead>
-                  <tr className="border-b border-white/10 text-zinc-400 uppercase text-[10px]">
-                    <th className="py-3 px-3">Username</th>
-                    <th className="py-3 px-3">Role</th>
-                    <th className="py-3 px-3">Account ID</th>
-                    <th className="py-3 px-3">Created</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {team.map((adm) => (
-                    <tr key={adm.id} className="hover:bg-white/[0.02]">
-                      <td className="py-4 px-3 font-bold text-white flex items-center gap-2">
-                        <Shield className="h-3.5 w-3.5 text-blue-400" />
-                        <span>{adm.username}</span>
-                      </td>
-                      <td className="py-4 px-3">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          adm.role === 'superadmin' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'
-                        }`}>
-                          {adm.role}
-                        </span>
-                      </td>
-                      <td className="py-4 px-3 text-zinc-400">{adm.id}</td>
-                      <td className="py-4 px-3 text-zinc-500">{adm.createdAt ? adm.createdAt.split('T')[0] : 'Active'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="rounded-3xl bg-[#060913]/95 border border-white/10 shadow-2xl overflow-hidden divide-y divide-white/5">
+              {team.map((adm) => (
+                <div key={adm.id} className="p-5 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                      <Shield className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-white text-sm">{adm.username}</div>
+                      <div className="text-zinc-500">Role: <span className="text-blue-400">{adm.role}</span></div>
+                    </div>
+                  </div>
+                  <span className="text-zinc-500 text-[11px]">Added {new Date(adm.createdAt).toLocaleDateString()}</span>
+                </div>
+              ))}
             </div>
-
           </div>
         )}
 
       </main>
 
       {/* ======================================================== */}
-      {/* 3. MODALS (DISPATCH & ADD ADMIN & PROFILE)                */}
+      {/* MODAL 1: INSPECT PAYMENT PROOF & VERIFY / REJECT         */}
       {/* ======================================================== */}
+      {proofModalOrder && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md"
+          onClick={() => setProofModalOrder(null)}
+        >
+          <div 
+            className="w-full max-w-xl bg-[#060913] border border-white/15 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <div className="text-xs font-mono text-emerald-400 font-bold">
+                  Order Verification Review • {proofModalOrder.id}
+                </div>
+                <h3 className="text-lg font-bold text-white font-display">
+                  {proofModalOrder.gameName} ({proofModalOrder.planTier})
+                </h3>
+              </div>
+              <button 
+                onClick={() => setProofModalOrder(null)}
+                className="text-zinc-400 hover:text-white font-mono text-xs cursor-pointer p-1"
+              >
+                ✕ Close
+              </button>
+            </div>
 
-      {/* MODAL: DISPATCH LICENSE KEY */}
+            {/* Order Details Grid */}
+            <div className="p-3.5 rounded-2xl bg-black/50 border border-white/5 grid grid-cols-2 gap-3 text-xs font-mono">
+              <div>
+                <span className="text-zinc-500">Customer:</span>
+                <div className="text-white font-semibold truncate">{proofModalOrder.customerEmail}</div>
+              </div>
+              <div>
+                <span className="text-zinc-500">Amount Due:</span>
+                <div className="text-emerald-400 font-black text-sm">${proofModalOrder.amount.toFixed(2)} USD</div>
+              </div>
+              <div>
+                <span className="text-zinc-500">Method:</span>
+                <div className="text-white font-bold">{proofModalOrder.paymentMethod}</div>
+              </div>
+              <div>
+                <span className="text-zinc-500">Payment Status:</span>
+                <div className={`font-bold ${
+                  proofModalOrder.paymentStatus === 'VERIFIED' ? 'text-emerald-400' :
+                  proofModalOrder.paymentStatus === 'REJECTED' ? 'text-rose-400' : 'text-amber-400'
+                }`}>
+                  {proofModalOrder.paymentStatus}
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Proof Details Box */}
+            <div className="p-4 rounded-2xl bg-black/60 border border-white/10 space-y-3">
+              <div className="text-xs font-mono uppercase tracking-wider text-zinc-400 font-bold flex items-center justify-between">
+                <span>Submitted Payment Proof</span>
+                {proofModalOrder.verifiedBy && (
+                  <span className="text-[10px] text-zinc-500 font-normal">
+                    Reviewed by {proofModalOrder.verifiedBy} at {proofModalOrder.verifiedAt}
+                  </span>
+                )}
+              </div>
+
+              {/* Transaction Hash */}
+              {proofModalOrder.proof?.txHash && (
+                <div className="space-y-1">
+                  <div className="text-[11px] font-mono text-zinc-500">On-Chain Tx Hash / ID:</div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-black/80 border border-white/10">
+                    <span className="flex-1 font-mono text-xs text-emerald-400 break-all select-all">
+                      {proofModalOrder.proof.txHash}
+                    </span>
+                    <button
+                      onClick={() => handleCopyText(proofModalOrder.proof?.txHash || '', 'tx')}
+                      className="px-2 py-1 rounded bg-white/10 text-white text-[10px] font-mono hover:bg-white/20 cursor-pointer flex-shrink-0"
+                    >
+                      {copiedProofText === 'tx' ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Gift Card Code */}
+              {proofModalOrder.proof?.giftCardCode && (
+                <div className="space-y-1">
+                  <div className="text-[11px] font-mono text-zinc-500">Gift Card Voucher Code:</div>
+                  <div className="flex items-center gap-2 p-2.5 rounded-xl bg-black/80 border border-purple-500/30">
+                    <span className="flex-1 font-mono text-xs text-purple-300 font-bold break-all select-all">
+                      {proofModalOrder.proof.giftCardCode}
+                    </span>
+                    <button
+                      onClick={() => handleCopyText(proofModalOrder.proof?.giftCardCode || '', 'gc')}
+                      className="px-2 py-1 rounded bg-purple-500/20 text-purple-200 text-[10px] font-mono hover:bg-purple-500/30 cursor-pointer flex-shrink-0"
+                    >
+                      {copiedProofText === 'gc' ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Screenshot Image Preview */}
+              {proofModalOrder.proof?.screenshotUrl ? (
+                <div className="space-y-1.5">
+                  <div className="text-[11px] font-mono text-zinc-500">Receipt Screenshot:</div>
+                  <div className="relative rounded-xl overflow-hidden border border-white/10 max-h-48 bg-black flex items-center justify-center">
+                    <img 
+                      src={proofModalOrder.proof.screenshotUrl} 
+                      alt="Payment Receipt Screenshot" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <a
+                    href={proofModalOrder.proof.screenshotUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-mono text-blue-400 hover:text-blue-300"
+                  >
+                    <span>Open full image in new tab</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              ) : null}
+
+              {!proofModalOrder.proof?.txHash && !proofModalOrder.proof?.screenshotUrl && !proofModalOrder.proof?.giftCardCode && (
+                <div className="py-4 text-center text-xs font-mono text-zinc-500">
+                  No proof attachment provided with this legacy order.
+                </div>
+              )}
+            </div>
+
+            {/* Rejection reason display if rejected */}
+            {proofModalOrder.rejectionReason && (
+              <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono space-y-1">
+                <div className="font-bold">Rejection Reason:</div>
+                <div>{proofModalOrder.rejectionReason}</div>
+              </div>
+            )}
+
+            {/* Actions: Verify / Reject */}
+            <div className="space-y-3 pt-2 border-t border-white/10">
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleVerifyPayment(proofModalOrder.id)}
+                  disabled={isVerifying || proofModalOrder.paymentStatus === 'VERIFIED'}
+                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{isVerifying ? 'Verifying...' : proofModalOrder.paymentStatus === 'VERIFIED' ? 'Payment Already Verified' : 'Approve & Mark Verified'}</span>
+                </button>
+              </div>
+
+              {/* Rejection input and trigger */}
+              <div className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-2">
+                <input
+                  type="text"
+                  value={rejectReasonInput}
+                  onChange={(e) => setRejectReasonInput(e.target.value)}
+                  placeholder="Reason for rejection (e.g. Unconfirmed TxID / Invalid voucher)"
+                  className="w-full p-2.5 rounded-xl bg-black/80 border border-white/10 text-white placeholder-zinc-600 text-xs font-mono focus:outline-none focus:border-rose-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleRejectPayment(proofModalOrder.id)}
+                  disabled={isRejecting || !rejectReasonInput.trim()}
+                  className="w-full py-2 px-3 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 font-mono text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  <span>Reject Payment with Reason</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL 2: DISPATCH LICENSE KEY                            */}
+      {/* ======================================================== */}
       {selectedOrder && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           onClick={() => setSelectedOrder(null)}
         >
           <div 
-            className="w-full max-w-lg bg-[#060913] border border-blue-500/40 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl relative"
+            className="w-full max-w-lg bg-[#060913] border border-blue-500/40 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2 text-blue-400 font-bold font-display text-base">
-                <Key className="h-5 w-5" />
-                <span>Dispatch Key: {selectedOrder.id}</span>
+              <div>
+                <div className="text-xs font-mono text-blue-400 font-bold">Fulfillment • {selectedOrder.id}</div>
+                <h3 className="text-lg font-bold text-white font-display">Dispatch License Key</h3>
               </div>
               <button 
                 onClick={() => setSelectedOrder(null)}
                 className="text-zinc-400 hover:text-white font-mono text-xs cursor-pointer"
               >
-                Close
+                ✕ Close
               </button>
             </div>
 
             {dispatchSuccess ? (
-              <div className="py-8 text-center space-y-2">
+              <div className="py-10 text-center space-y-2">
                 <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-400 animate-bounce" />
-                <h4 className="text-lg font-bold text-white font-display">License Key Dispatched</h4>
-                <p className="text-xs text-zinc-400">Delivered directly to {selectedOrder.customerEmail} and updated on customer vault.</p>
+                <h4 className="text-lg font-bold text-white font-display">Dispatched Successfully</h4>
+                <p className="text-xs text-zinc-400">License key has been recorded and customer dashboard updated.</p>
               </div>
             ) : (
               <form onSubmit={handleDispatchKey} className="space-y-4 text-xs font-mono">
-                
-                <div className="p-4 rounded-2xl bg-black/60 border border-white/10 space-y-1">
-                  <div className="text-zinc-400">Order: <strong className="text-white">{selectedOrder.gameName} ({selectedOrder.planTier})</strong></div>
-                  <div className="text-zinc-400">Customer: <strong className="text-blue-300">{selectedOrder.customerEmail}</strong></div>
-                  <div className="text-zinc-400">Payment: <strong className="text-emerald-400">${selectedOrder.amount.toFixed(2)} ({selectedOrder.paymentMethod})</strong></div>
+                <div className="p-3 rounded-xl bg-black/50 border border-white/5 space-y-1">
+                  <div className="text-slate-400">Product: <strong className="text-white">{selectedOrder.gameName}</strong></div>
+                  <div className="text-slate-400">Tier: <strong className="text-white">{selectedOrder.planTier}</strong></div>
+                  <div className="text-slate-400">Customer: <strong className="text-white">{selectedOrder.customerEmail}</strong></div>
                 </div>
 
-                <div>
-                  <label className="block text-zinc-300 mb-1 font-bold">Paste License Key (Received from 3rd Party)</label>
+                <div className="space-y-1">
+                  <label className="block text-zinc-300 font-bold">Paste License Key (from provider):</label>
                   <input
                     type="text"
                     value={customKey}
@@ -1159,8 +1651,8 @@ export default function AdminDashboardPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-zinc-400 mb-1">Fulfillment Notes (Optional)</label>
+                <div className="space-y-1">
+                  <label className="block text-zinc-400">Fulfillment Notes (Optional):</label>
                   <input
                     type="text"
                     value={dispatchNotes}
@@ -1188,12 +1680,13 @@ export default function AdminDashboardPage() {
                 </div>
               </form>
             )}
-
           </div>
         </div>
       )}
 
-      {/* MODAL: ADD ADMIN (SUPER ADMIN) */}
+      {/* ======================================================== */}
+      {/* MODAL 3: ADD ADMIN (SUPER ADMIN ONLY)                    */}
+      {/* ======================================================== */}
       {showAddAdminModal && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
@@ -1212,7 +1705,7 @@ export default function AdminDashboardPage() {
                 onClick={() => setShowAddAdminModal(false)}
                 className="text-zinc-400 hover:text-white font-mono text-xs cursor-pointer"
               >
-                Close
+                ✕ Close
               </button>
             </div>
 
@@ -1284,12 +1777,11 @@ export default function AdminDashboardPage() {
                 </div>
               </form>
             )}
-
           </div>
         </div>
       )}
 
-      {/* MODAL: ADMIN PROFILE (USERNAME / PASSWORD / LOGOUT) */}
+      {/* MODAL 4: ADMIN PROFILE */}
       {currentAdmin && (
         <ProfileModal
           isOpen={showProfileModal}

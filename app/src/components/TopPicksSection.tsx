@@ -6,9 +6,10 @@ import { ArrowXLogo } from './ArrowXLogo';
 import { ChevronRight, Shield } from 'lucide-react';
 import type { Product } from '../types';
 import { useTheme } from '../context/ThemeContext';
+import { getStartingPrice } from '@arrowx/shared/catalog';
 
 interface TopPicksSectionProps {
-  products: Product[];
+  products: readonly Product[];
   onSelectProduct: (product: Product) => void;
   onSeeAll: () => void;
 }
@@ -19,7 +20,7 @@ export const TopPicksSection: React.FC<TopPicksSectionProps> = ({
   onSeeAll,
 }) => {
   const { themeConfig } = useTheme();
-  const topPicks = products.filter(p => p.isTopPick).slice(0, 4);
+  const topPicks = products.slice(0, 4);
 
   return (
     <section className="py-6 relative">
@@ -45,7 +46,7 @@ export const TopPicksSection: React.FC<TopPicksSectionProps> = ({
             onClick={onSeeAll}
             className="flex items-center gap-1 text-fluid-xs font-medium text-zinc-400 hover:text-white transition-colors group cursor-pointer"
           >
-            <span>See all 160+ titles</span>
+            <span>See all {products.length} titles</span>
             <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
@@ -62,12 +63,12 @@ export const TopPicksSection: React.FC<TopPicksSectionProps> = ({
               {/* Background Game Poster Image */}
               <div className="absolute inset-0 z-0 overflow-hidden">
                 <img
-                  src={product.image}
+                  src={product.heroImage}
                   alt={product.name}
                   loading="lazy"
                   decoding="async"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'https://cdn.cloudflare.steamstatic.com/steam/apps/1808500/library_600x900.jpg';
+                    (e.target as HTMLImageElement).src = '/assets/logo-green.png';
                   }}
                   className="w-full h-full object-cover object-center filter grayscale-[20%] brightness-[70%] card-poster-img"
                 />
@@ -85,7 +86,7 @@ export const TopPicksSection: React.FC<TopPicksSectionProps> = ({
                 </span>
 
                 <span className="text-[11px] font-mono font-bold text-white/90 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-md border border-white/10">
-                  ${product.pricing.day || 4.99} / day
+                  From ${(getStartingPrice(product.id) ?? 0).toFixed(2)}
                 </span>
               </div>
 

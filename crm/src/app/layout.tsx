@@ -18,6 +18,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'ArrowX Command Center & Order Dispatch Portal',
   description: 'Track real-time order processing, key dispatch telemetry, and admin management for ArrowX.',
+  icons: {
+    icon: '/assets/logo-green.png',
+    shortcut: '/assets/logo-green.png',
+    apple: '/assets/logo-green.png',
+  },
   robots: {
     index: false,
     follow: false,

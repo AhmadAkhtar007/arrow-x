@@ -33,6 +33,9 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Failed to update order claim status.' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Failed to update order claim status.' },
+      { status: error.message?.includes('verified') ? 400 : 500 }
+    );
   }
 }

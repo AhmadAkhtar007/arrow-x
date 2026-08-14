@@ -90,7 +90,7 @@ export const Navbar: React.FC = () => {
           
           {/* Discord Community Link (Icon on mobile, Icon + text on desktop) */}
           <a
-            href="https://discord.gg/sMHzvy2QYT"
+            href={process.env.NEXT_PUBLIC_DISCORD_URL || "https://discord.gg/sMHzvy2QYT"}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg text-xs font-medium text-zinc-300 hover:text-white bg-white/[0.05] hover:bg-white/10 border border-white/10 transition-all cursor-pointer"
@@ -105,7 +105,7 @@ export const Navbar: React.FC = () => {
 
           {/* Prominent High-Contrast Customer Sign In Button */}
           <a
-            href="http://localhost:3001/login"
+            href={`${process.env.NEXT_PUBLIC_CRM_URL || 'http://localhost:3001'}/login`}
             className="flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-mono font-bold text-black bg-emerald-400 hover:bg-emerald-300 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 cursor-pointer"
             title="Customer Dashboard & License Keys"
           >

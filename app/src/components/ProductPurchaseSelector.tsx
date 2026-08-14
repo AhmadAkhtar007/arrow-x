@@ -22,8 +22,9 @@ export const ProductPurchaseSelector: React.FC<ProductPurchaseSelectorProps> = (
     setOfferId('');
   };
 
+  const crmBaseUrl = process.env.NEXT_PUBLIC_CRM_URL || 'http://localhost:3001';
   const checkoutUrl = currentOffer
-    ? `http://localhost:3001/checkout?product=${encodeURIComponent(product.id)}&variant=${encodeURIComponent(currentVariant.id)}&offer=${encodeURIComponent(currentOffer.id)}`
+    ? `${crmBaseUrl}/checkout?product=${encodeURIComponent(product.id)}&variant=${encodeURIComponent(currentVariant.id)}&offer=${encodeURIComponent(currentOffer.id)}`
     : undefined;
 
   return (

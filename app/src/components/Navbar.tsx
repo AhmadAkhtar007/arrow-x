@@ -105,7 +105,12 @@ export const Navbar: React.FC = () => {
 
           {/* Prominent High-Contrast Customer Sign In Button */}
           <a
-            href={`${process.env.NEXT_PUBLIC_CRM_URL || 'http://localhost:3001'}/login`}
+            href={`${
+              process.env.NEXT_PUBLIC_CRM_URL || 
+              (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'))
+                ? 'http://localhost:3001'
+                : 'https://vault.arrowx.shop')
+            }/login`}
             className="flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-mono font-bold text-black bg-emerald-400 hover:bg-emerald-300 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 cursor-pointer"
             title="Customer Dashboard & License Keys"
           >

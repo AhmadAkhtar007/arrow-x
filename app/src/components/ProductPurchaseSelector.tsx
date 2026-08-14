@@ -22,7 +22,13 @@ export const ProductPurchaseSelector: React.FC<ProductPurchaseSelectorProps> = (
     setOfferId('');
   };
 
-  const crmBaseUrl = process.env.NEXT_PUBLIC_CRM_URL || 'http://localhost:3001';
+  // Resolve CRM base URL dynamically with production fallback
+  const crmBaseUrl = 
+    process.env.NEXT_PUBLIC_CRM_URL || 
+    (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'))
+      ? 'http://localhost:3001'
+      : 'https://vault.arrowx.shop');
+
   const checkoutUrl = currentOffer
     ? `${crmBaseUrl}/checkout?product=${encodeURIComponent(product.id)}&variant=${encodeURIComponent(currentVariant.id)}&offer=${encodeURIComponent(currentOffer.id)}`
     : undefined;

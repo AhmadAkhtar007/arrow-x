@@ -195,6 +195,8 @@ export async function getSupabaseTickets(customerEmail?: string): Promise<RealSu
   }
 }
 
+import { createCatalogGiftCardLinks } from '@arrowx/shared/orders';
+
 // ====================================================================
 // 4. PAYMENT SETTINGS
 // ====================================================================
@@ -206,17 +208,40 @@ export async function getSupabasePaymentSettings(): Promise<PaymentSettings | nu
       .eq('id', 'default')
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error || !data) {
+      return {
+        btcAddress: '156uWuAoK4MZpZGcJcXeZ4pvqetc8zrsdA',
+        btcQrUrl: '/assets/payments/btc.png',
+        solAddress: '6Thyxoq4WwyobyTepmiqxN6n2JpQfsFfwQpz9c1gv6m8',
+        solQrUrl: '/assets/payments/sol.png',
+        usdtTrc20Address: 'THYKE8YXanrBSCvFtiihVLYstNNprKUhoC',
+        usdtTrc20QrUrl: '/assets/payments/usdt-trc20.png',
+        giftCardLinks: createCatalogGiftCardLinks(),
+      };
+    }
+
+    const customLinks = Array.isArray(data.gift_card_links) && data.gift_card_links.length > 0
+      ? (data.gift_card_links as any)
+      : createCatalogGiftCardLinks();
+
     return {
-      btcAddress: data.btc_address,
-      btcQrUrl: data.btc_qr_url || undefined,
-      solAddress: data.sol_address,
-      solQrUrl: data.sol_qr_url || undefined,
-      usdtTrc20Address: data.usdt_trc20_address,
-      usdtTrc20QrUrl: data.usdt_trc20_qr_url || undefined,
-      giftCardLinks: Array.isArray(data.gift_card_links) ? (data.gift_card_links as any) : [],
+      btcAddress: data.btc_address || '156uWuAoK4MZpZGcJcXeZ4pvqetc8zrsdA',
+      btcQrUrl: data.btc_qr_url || '/assets/payments/btc.png',
+      solAddress: data.sol_address || '6Thyxoq4WwyobyTepmiqxN6n2JpQfsFfwQpz9c1gv6m8',
+      solQrUrl: data.sol_qr_url || '/assets/payments/sol.png',
+      usdtTrc20Address: data.usdt_trc20_address || 'THYKE8YXanrBSCvFtiihVLYstNNprKUhoC',
+      usdtTrc20QrUrl: data.usdt_trc20_qr_url || '/assets/payments/usdt-trc20.png',
+      giftCardLinks: customLinks,
     };
   } catch {
-    return null;
+    return {
+      btcAddress: '156uWuAoK4MZpZGcJcXeZ4pvqetc8zrsdA',
+      btcQrUrl: '/assets/payments/btc.png',
+      solAddress: '6Thyxoq4WwyobyTepmiqxN6n2JpQfsFfwQpz9c1gv6m8',
+      solQrUrl: '/assets/payments/sol.png',
+      usdtTrc20Address: 'THYKE8YXanrBSCvFtiihVLYstNNprKUhoC',
+      usdtTrc20QrUrl: '/assets/payments/usdt-trc20.png',
+      giftCardLinks: createCatalogGiftCardLinks(),
+    };
   }
 }

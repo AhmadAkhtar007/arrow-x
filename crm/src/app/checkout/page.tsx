@@ -41,7 +41,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
         {/* Navigation Breadcrumb / Back Button */}
         <div className="flex items-center justify-between">
           <a
-            href="http://localhost:3000/products"
+            href={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://arrowx.shop'}/products`}
             className="inline-flex items-center gap-2 text-xs font-mono text-zinc-400 hover:text-white transition-colors group cursor-pointer"
           >
             <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />

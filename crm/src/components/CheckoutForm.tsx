@@ -18,7 +18,7 @@ import {
   Info
 } from 'lucide-react';
 import type { PaymentMethod, PaymentSettings, ResolvedSelection } from '@arrowx/shared/orders';
-import { findGiftCardPurchaseLink, getRequiredGiftCardDenomination } from '@arrowx/shared/orders';
+import { findGiftCardPurchaseLink, getRequiredGiftCardDenomination, createCatalogGiftCardLinks } from '@arrowx/shared/orders';
 
 interface CheckoutFormProps {
   selection: ResolvedSelection;
@@ -237,7 +237,11 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
     { name: 'Tether USD', code: 'TRON · TRC-20', accent: 'text-emerald-400', warning: 'Send only USDT using the TRON (TRC-20) network.' };
 
   const requiredGiftCardDenomination = getRequiredGiftCardDenomination(selection.amountUsd);
-  const giftCardLink = findGiftCardPurchaseLink(selection.amountUsd, paymentSettings?.giftCardLinks || []);
+  const activeGiftCardLinks = 
+    paymentSettings?.giftCardLinks && paymentSettings.giftCardLinks.length > 0 
+      ? paymentSettings.giftCardLinks 
+      : createCatalogGiftCardLinks();
+  const giftCardLink = findGiftCardPurchaseLink(selection.amountUsd, activeGiftCardLinks);
   const giftCardOverage = requiredGiftCardDenomination - selection.amountUsd;
   const giftCardUnavailable = paymentMethod === 'GIFT_CARD' && !giftCardLink;
 

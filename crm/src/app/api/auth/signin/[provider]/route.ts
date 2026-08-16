@@ -13,8 +13,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prov
   try {
     const supabase = await createClient();
     
-    // Construct standard Supabase auth callback URL
-    const callbackUrl = new URL('/api/auth/callback', req.nextUrl.origin);
+    const origin = process.env.NEXT_PUBLIC_APP_URL || (req.nextUrl.origin.includes('localhost') ? req.nextUrl.origin : 'https://vault.arrowx.shop');
+    const callbackUrl = new URL('/api/auth/callback', origin);
     callbackUrl.searchParams.set('returnUrl', returnUrl);
     callbackUrl.searchParams.set('provider', provider);
 

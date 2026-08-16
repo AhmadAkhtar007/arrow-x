@@ -82,6 +82,116 @@ export async function upsertSupabaseUser(user: UserAccount): Promise<boolean> {
   }
 }
 
+export async function generateSupabaseOtp(
+  email: string, 
+  name?: string
+): Promise<{ otpCode: string; isNewUser: boolean; user: UserAccount }> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const existing = await getSupabaseUserByEmail(normalizedEmail);
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+  let user: UserAccount;
+  let isNewUser = false;
+
+  if (existing) {
+    user = {
+      ...existing,
+      otpCode,
+      otpExpiresAt,
+    };
+  } else {
+    isNewUser = true;
+    const defaultName = name || normalizedEmail.split('@')[0];
+    user = {
+      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name: defaultName,
+      email: normalizedEmail,
+      username: defaultName.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
+      role: 'customer',
+      otpCode,
+      otpExpiresAt,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  await upsertSupabaseUser(user);
+  return { otpCode, isNewUser, user };
+}
+
+export async function verifySupabaseOtp(
+  email: string,
+  code: string,
+  name?: string,
+  discordHandle?: string
+): Promise<UserAccount> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const user = await getSupabaseUserByEmail(normalizedEmail);
+
+  if (!user) {
+    throw new Error('Account not found. Please request a new verification code.');
+  }
+
+  if (!user.otpCode || user.otpCode !== code.trim()) {
+    throw new Error('Invalid verification code. Please check your code and try again.');
+  }
+
+  if (user.otpExpiresAt && new Date() > new Date(user.otpExpiresAt)) {
+    throw new Error('Verification code has expired. Please request a new code.');
+  }
+
+  // Clear OTP on successful login
+  const updatedUser: UserAccount = {
+    ...user,
+    otpCode: undefined,
+    otpExpiresAt: undefined,
+    name: name?.trim() ? name.trim() : user.name,
+    discordHandle: discordHandle?.trim() ? discordHandle.trim() : user.discordHandle,
+  };
+
+  await upsertSupabaseUser(updatedUser);
+  return updatedUser;
+}
+
+export async function upsertSupabaseOAuthCustomer(data: {
+  email: string;
+  name: string;
+  provider: 'google' | 'discord';
+  providerId: string;
+  discordHandle?: string;
+}): Promise<UserAccount> {
+  const normalizedEmail = data.email.trim().toLowerCase();
+  const existing = await getSupabaseUserByEmail(normalizedEmail);
+
+  if (existing) {
+    const updated: UserAccount = {
+      ...existing,
+      name: data.name || existing.name,
+      googleId: data.provider === 'google' ? data.providerId : existing.googleId,
+      discordId: data.provider === 'discord' ? data.providerId : existing.discordId,
+      discordHandle: data.discordHandle || existing.discordHandle,
+    };
+    await upsertSupabaseUser(updated);
+    return updated;
+  }
+
+  const defaultName = data.name || normalizedEmail.split('@')[0];
+  const newUser: UserAccount = {
+    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    name: defaultName,
+    email: normalizedEmail,
+    username: defaultName.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
+    role: 'customer',
+    googleId: data.provider === 'google' ? data.providerId : undefined,
+    discordId: data.provider === 'discord' ? data.providerId : undefined,
+    discordHandle: data.discordHandle,
+    createdAt: new Date().toISOString(),
+  };
+
+  await upsertSupabaseUser(newUser);
+  return newUser;
+}
+
 // ====================================================================
 // 2. ORDERS & TRANSACTIONS
 // ====================================================================

@@ -185,10 +185,13 @@ function CustomerLoginContent() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError('');
+                  }}
                   placeholder="you@example.com"
                   required
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-[#111214] pl-11 pr-4 text-sm text-white placeholder-zinc-500 outline-none transition focus:border-white/30 focus:ring-1 focus:ring-white/20"
+                  className="w-full bg-[#121316] border border-white/10 rounded-2xl pl-11 pr-4 py-3.5 text-xs text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all font-mono"
                 />
               </div>
             </div>

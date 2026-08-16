@@ -14,7 +14,15 @@ import {
 } from './types';
 import bcrypt from 'bcryptjs';
 import { createCatalogGiftCardLinks } from '@arrowx/shared/orders';
-import { upsertSupabaseUser, upsertSupabaseOrder } from './supabaseDb';
+import { 
+  upsertSupabaseUser, 
+  upsertSupabaseOrder, 
+  getSupabaseUsers, 
+  getSupabaseUserByEmail, 
+  generateSupabaseOtp, 
+  verifySupabaseOtp, 
+  upsertSupabaseOAuthCustomer 
+} from './supabaseDb';
 
 interface DatabaseSchema {
   admins: AdminAccount[];
@@ -155,14 +163,19 @@ export function initializeDatabase(): DatabaseSchema {
   }
 }
 
-// Atomic Thread-Safe DB Writer
+// Atomic Thread-Safe DB Writer (Safeguarded for Read-Only / Serverless Runtimes)
 function writeDb(data: DatabaseSchema) {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DB_DIR)) {
+      fs.mkdirSync(DB_DIR, { recursive: true });
+    }
+    const tempFile = `${DB_FILE}.tmp`;
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempFile, DB_FILE);
+  } catch (err) {
+    // Cloudflare Pages and Edge runtimes have read-only filesystems.
+    // Supabase PostgreSQL handles real-time cloud persistence.
   }
-  const tempFile = `${DB_FILE}.tmp`;
-  fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
-  fs.renameSync(tempFile, DB_FILE);
 }
 
 // --- PAYMENT SETTINGS OPERATIONS ---
@@ -254,13 +267,18 @@ export async function updateAdminProfile(
 
 // --- CUSTOMER / OTP OPERATIONS ---
 export async function getUsers(): Promise<UserAccount[]> {
+  const supabaseUsers = await getSupabaseUsers();
+  if (supabaseUsers && supabaseUsers.length > 0) return supabaseUsers;
   const db = initializeDatabase();
   return db.users;
 }
 
 export async function getUserByEmail(email: string): Promise<UserAccount | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const supabaseUser = await getSupabaseUserByEmail(normalizedEmail);
+  if (supabaseUser) return supabaseUser;
   const db = initializeDatabase();
-  return db.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+  return db.users.find((u) => u.email.toLowerCase() === normalizedEmail) || null;
 }
 
 export async function getUserById(id: string): Promise<UserAccount | null> {
@@ -269,39 +287,40 @@ export async function getUserById(id: string): Promise<UserAccount | null> {
 }
 
 export async function generateCustomerOtp(email: string, name?: string): Promise<{ otpCode: string; isNewUser: boolean }> {
-  const db = initializeDatabase();
-  const normalizedEmail = email.trim().toLowerCase();
-  
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  try {
+    const res = await generateSupabaseOtp(email, name);
+    return { otpCode: res.otpCode, isNewUser: res.isNewUser };
+  } catch (err) {
+    console.warn('[DB] Supabase OTP generation fallback:', err);
+    const db = initializeDatabase();
+    const normalizedEmail = email.trim().toLowerCase();
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const index = db.users.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
+    let isNewUser = false;
 
-  const index = db.users.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
-  let isNewUser = false;
-
-  if (index >= 0) {
-    db.users[index].otpCode = otpCode;
-    db.users[index].otpExpiresAt = expiresAt;
-    writeDb(db);
-    upsertSupabaseUser(db.users[index]).catch(() => {});
-  } else {
-    isNewUser = true;
-    const defaultName = name || normalizedEmail.split('@')[0];
-    const newUser: UserAccount = {
-      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      name: defaultName,
-      email: normalizedEmail,
-      username: defaultName.toLowerCase().replace(/\s+/g, '_'),
-      role: 'customer',
-      otpCode,
-      otpExpiresAt: expiresAt,
-      createdAt: new Date().toISOString(),
-    };
-    db.users.push(newUser);
-    writeDb(db);
-    upsertSupabaseUser(newUser).catch(() => {});
+    if (index >= 0) {
+      db.users[index].otpCode = otpCode;
+      db.users[index].otpExpiresAt = expiresAt;
+      writeDb(db);
+    } else {
+      isNewUser = true;
+      const defaultName = name || normalizedEmail.split('@')[0];
+      const newUser: UserAccount = {
+        id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: defaultName,
+        email: normalizedEmail,
+        username: defaultName.toLowerCase().replace(/\s+/g, '_'),
+        role: 'customer',
+        otpCode,
+        otpExpiresAt: expiresAt,
+        createdAt: new Date().toISOString(),
+      };
+      db.users.push(newUser);
+      writeDb(db);
+    }
+    return { otpCode, isNewUser };
   }
-
-  return { otpCode, isNewUser };
 }
 
 export async function verifyCustomerOtp(
@@ -310,31 +329,36 @@ export async function verifyCustomerOtp(
   name?: string, 
   discordHandle?: string
 ): Promise<UserAccount> {
-  const db = initializeDatabase();
-  const normalizedEmail = email.trim().toLowerCase();
-  const index = db.users.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
+  try {
+    return await verifySupabaseOtp(email, code, name, discordHandle);
+  } catch (err: any) {
+    const db = initializeDatabase();
+    const normalizedEmail = email.trim().toLowerCase();
+    const index = db.users.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
 
-  if (index === -1) {
-    throw new Error('Account not found. Please request a new verification code.');
+    if (index === -1) {
+      throw new Error(err?.message || 'Account not found. Please request a new verification code.');
+    }
+
+    const user = db.users[index];
+
+    if (!user.otpCode || user.otpCode !== code.trim()) {
+      throw new Error('Invalid verification code. Please check your email and try again.');
+    }
+
+    if (user.otpExpiresAt && new Date() > new Date(user.otpExpiresAt)) {
+      throw new Error('Verification code has expired. Please request a new code.');
+    }
+
+    user.otpCode = null;
+    user.otpExpiresAt = null;
+    if (name?.trim()) user.name = name.trim();
+    if (discordHandle?.trim()) user.discordHandle = discordHandle.trim();
+
+    db.users[index] = user;
+    writeDb(db);
+    return user;
   }
-
-  const user = db.users[index];
-
-  if (!user.otpCode || user.otpCode !== code.trim()) {
-    throw new Error('Invalid verification code. Please check your email and try again.');
-  }
-
-  if (user.otpExpiresAt && new Date() > new Date(user.otpExpiresAt)) {
-    throw new Error('Verification code has expired. Please request a new code.');
-  }
-
-  user.otpCode = null;
-  user.otpExpiresAt = null;
-
-  db.users[index] = user;
-  writeDb(db);
-  upsertSupabaseUser(user).catch(() => {});
-  return user;
 }
 
 export async function createUser(data: {
@@ -343,20 +367,20 @@ export async function createUser(data: {
   username?: string;
   discordHandle?: string;
 }): Promise<UserAccount> {
-  const db = initializeDatabase();
-  const name = data.name || data.username || data.email.split('@')[0];
+  const defaultName = data.name || data.username || data.email.split('@')[0];
   const newUser: UserAccount = {
     id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    name,
-    email: data.email.toLowerCase(),
-    username: name.toLowerCase().replace(/\s+/g, '_'),
+    name: defaultName,
+    email: data.email.toLowerCase().trim(),
+    username: defaultName.toLowerCase().replace(/\s+/g, '_'),
     discordHandle: data.discordHandle,
     role: 'customer',
     createdAt: new Date().toISOString(),
   };
+  await upsertSupabaseUser(newUser).catch(() => {});
+  const db = initializeDatabase();
   db.users.push(newUser);
   writeDb(db);
-  upsertSupabaseUser(newUser).catch(() => {});
   return newUser;
 }
 
@@ -367,38 +391,41 @@ export async function upsertOAuthCustomer(data: {
   providerId: string;
   discordHandle?: string;
 }): Promise<UserAccount> {
-  const db = initializeDatabase();
-  const normalizedEmail = data.email.trim().toLowerCase();
-  const index = db.users.findIndex((user) => user.email.toLowerCase() === normalizedEmail);
+  try {
+    return await upsertSupabaseOAuthCustomer(data);
+  } catch (err) {
+    console.warn('[DB] Supabase OAuth customer fallback:', err);
+    const db = initializeDatabase();
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const index = db.users.findIndex((user) => user.email.toLowerCase() === normalizedEmail);
 
-  if (index >= 0) {
-    const user = db.users[index];
-    if (data.provider === 'google') user.googleId = data.providerId;
-    if (data.provider === 'discord') {
-      user.discordId = data.providerId;
-      if (!user.discordHandle && data.discordHandle) user.discordHandle = data.discordHandle;
+    if (index >= 0) {
+      const user = db.users[index];
+      if (data.provider === 'google') user.googleId = data.providerId;
+      if (data.provider === 'discord') {
+        user.discordId = data.providerId;
+        if (!user.discordHandle && data.discordHandle) user.discordHandle = data.discordHandle;
+      }
+      writeDb(db);
+      return user;
     }
+
+    const name = data.name.trim() || normalizedEmail.split('@')[0];
+    const user: UserAccount = {
+      id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      name,
+      email: normalizedEmail,
+      username: name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+      role: 'customer',
+      discordHandle: data.discordHandle,
+      discordId: data.provider === 'discord' ? data.providerId : undefined,
+      googleId: data.provider === 'google' ? data.providerId : undefined,
+      createdAt: new Date().toISOString(),
+    };
+    db.users.push(user);
     writeDb(db);
-    upsertSupabaseUser(user).catch(() => {});
     return user;
   }
-
-  const name = data.name.trim() || normalizedEmail.split('@')[0];
-  const user: UserAccount = {
-    id: `usr_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    name,
-    email: normalizedEmail,
-    username: name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
-    role: 'customer',
-    discordHandle: data.discordHandle,
-    discordId: data.provider === 'discord' ? data.providerId : undefined,
-    googleId: data.provider === 'google' ? data.providerId : undefined,
-    createdAt: new Date().toISOString(),
-  };
-  db.users.push(user);
-  writeDb(db);
-  upsertSupabaseUser(user).catch(() => {});
-  return user;
 }
 
 export async function updateCustomerProfile(

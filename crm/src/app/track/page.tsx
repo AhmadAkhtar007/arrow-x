@@ -16,7 +16,6 @@ import {
   RefreshCw,
   AlertTriangle
 } from 'lucide-react';
-import { CrmNavbar } from '../../components/CrmNavbar';
 
 function TrackContent() {
   const searchParams = useSearchParams();
@@ -264,19 +263,15 @@ function TrackContent() {
 
 export default function TrackPage() {
   return (
-    <div className="min-h-screen bg-[#040705] text-zinc-100 flex flex-col font-sans">
-      <CrmNavbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
-        <Suspense fallback={
-          <div className="py-20 text-center text-xs font-mono text-emerald-400">
-            <Clock className="h-8 w-8 mx-auto animate-spin mb-2" />
-            <div>Loading Tracking Stream...</div>
-          </div>
-        }>
-          <TrackContent />
-        </Suspense>
-      </main>
+    <div className="w-full pt-4 pb-12">
+      <Suspense fallback={
+        <div className="py-20 text-center text-xs font-mono text-emerald-400">
+          <Clock className="h-8 w-8 mx-auto animate-spin mb-2" />
+          <div>Loading Tracking Stream...</div>
+        </div>
+      }>
+        <TrackContent />
+      </Suspense>
     </div>
   );
 }

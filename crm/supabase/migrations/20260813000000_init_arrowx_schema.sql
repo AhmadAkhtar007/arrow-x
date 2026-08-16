@@ -196,15 +196,18 @@ INSERT INTO public.payment_settings (
 )
 VALUES (
   'default',
-  'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  '156uWuAoK4MZpZGcJcXeZ4pvqetc8zrsdA',
   '/assets/payments/btc.png',
-  '7NXvZZgKqE1WqH9vWpE9xZ1Y8kM5qR3tU7vW9xZ1Y8kM',
+  '6Thyxoq4WwyobyTepmiqxN6n2JpQfsFfwQpz9c1gv6m8',
   '/assets/payments/sol.png',
   'THYKE8YXanrBSCvFtiihVLYstNNprKUhoC',
   '/assets/payments/usdt-trc20.png',
   '[]'::jsonb
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+  btc_address = EXCLUDED.btc_address,
+  sol_address = EXCLUDED.sol_address,
+  usdt_trc20_address = EXCLUDED.usdt_trc20_address;
 
 -- ====================================================================
 -- 8. AUTOMATED DATABASE TRIGGER (auth.users -> public.users)

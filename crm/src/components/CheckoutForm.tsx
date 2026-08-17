@@ -752,6 +752,8 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
               </span>
               <ArrowRight className="h-4 w-4" />
             </button>
+          )}
+
         </div>
 
       </div>

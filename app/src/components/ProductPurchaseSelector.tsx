@@ -35,34 +35,36 @@ export const ProductPurchaseSelector: React.FC<ProductPurchaseSelectorProps> = (
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
-      {/* Left: Interactive Variant Artwork Display */}
-      <div className="lg:col-span-5 relative w-full h-[400px] sm:h-[480px] lg:h-[min(540px,calc(100dvh-12rem))] rounded-3xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] bg-black group flex-shrink-0">
-        <img
-          key={currentVariant.id}
-          src={currentVariant.artwork}
-          alt={`${product.name} - ${currentVariant.name}`}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = product.heroImage || '/assets/logo-green.png';
-          }}
-          className="w-full h-full object-cover object-center filter brightness-95 group-hover:scale-105 transition-transform duration-700"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#060907] via-transparent to-black/30 pointer-events-none" />
+      {/* Left: Interactive Variant Artwork Display (True 2:3 Poster Frame) */}
+      <div className="lg:col-span-5 flex justify-center lg:justify-start">
+        <div className="relative w-full max-w-[360px] sm:max-w-[400px] lg:max-w-[380px] aspect-[2/3] rounded-3xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.9)] bg-[#040806] group flex-shrink-0">
+          <img
+            key={currentVariant.id}
+            src={currentVariant.artwork}
+            alt={`${product.name} - ${currentVariant.name}`}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = product.heroImage || '/assets/logo-green.png';
+            }}
+            className="w-full h-full object-cover object-center filter brightness-95 group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#060907]/90 via-transparent to-black/30 pointer-events-none" />
 
-        {/* Top Status Badge */}
-        <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-black/80 backdrop-blur-md border border-white/10 text-emerald-400 shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>{product.status || 'Undetected'}</span>
-        </div>
+          {/* Top Status Badge */}
+          <div className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-semibold bg-black/80 backdrop-blur-md border border-white/10 text-emerald-400 shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{product.status || 'Undetected'}</span>
+          </div>
 
-        {/* Variant Name Badge */}
-        <div className="absolute top-4 right-4 px-3 py-1 rounded-xl text-xs font-mono font-bold bg-black/80 backdrop-blur-md text-zinc-200 border border-white/10 shadow-lg">
-          {currentVariant.name}
-        </div>
+          {/* Variant Name Badge */}
+          <div className="absolute top-4 right-4 px-3 py-1 rounded-xl text-xs font-mono font-bold bg-black/80 backdrop-blur-md text-zinc-200 border border-white/10 shadow-lg">
+            {currentVariant.name}
+          </div>
 
-        {/* Bottom Card Info Strip */}
-        <div className="absolute bottom-4 left-4 right-4 p-3 rounded-2xl bg-black/75 backdrop-blur-xl border border-white/10 flex items-center justify-between text-xs font-mono">
-          <span className="text-zinc-400">Category:</span>
-          <span className="text-emerald-400 font-bold">{product.category}</span>
+          {/* Bottom Card Info Strip */}
+          <div className="absolute bottom-4 left-4 right-4 p-3 rounded-2xl bg-black/75 backdrop-blur-xl border border-white/10 flex items-center justify-between text-xs font-mono">
+            <span className="text-zinc-400">Category:</span>
+            <span className="text-emerald-400 font-bold">{product.category}</span>
+          </div>
         </div>
       </div>
 

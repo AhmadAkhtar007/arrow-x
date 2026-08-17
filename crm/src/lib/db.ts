@@ -29,7 +29,8 @@ import {
   getSupabaseAdminById,
   createSupabaseAdmin,
   updateSupabaseAdminProfile,
-  deleteSupabaseAdmin
+  deleteSupabaseAdmin,
+  deleteSupabaseUser
 } from './supabaseDb';
 
 interface DatabaseSchema {
@@ -535,6 +536,22 @@ export async function updateCustomerProfile(
 
   writeDb(db);
   return db.users[index];
+}
+
+export async function deleteCustomer(userId: string): Promise<boolean> {
+  try {
+    await deleteSupabaseUser(userId);
+  } catch (err) {
+    console.warn('[DB] Supabase deleteCustomer fallback:', err);
+  }
+
+  const db = initializeDatabase();
+  const initialCount = db.users.length;
+  db.users = db.users.filter((u) => u.id !== userId && u.email.toLowerCase() !== userId.toLowerCase());
+  if (db.users.length !== initialCount) {
+    writeDb(db);
+  }
+  return true;
 }
 
 // --- ORDER OPERATIONS ---

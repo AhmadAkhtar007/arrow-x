@@ -63,6 +63,8 @@ export default function AdminDashboardPage() {
 
   // Customer Directory
   const [searchCustomer, setSearchCustomer] = useState('');
+  const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
+  const [customerActionMessage, setCustomerActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Orders Page Filters
   const [searchOrder, setSearchOrder] = useState('');
@@ -357,6 +359,39 @@ export default function AdminDashboardPage() {
       console.error('Error sending ticket reply:', err);
     } finally {
       setSendingReply(false);
+    }
+  };
+
+  // 9. Customer: Delete Customer (Super Admin Only)
+  const handleDeleteCustomer = async (cust: UserAccount) => {
+    if (currentAdmin?.role !== 'superadmin') {
+      alert('Only Super Admins have permission to delete customer records.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to permanently delete customer "${cust.name || cust.email}" from Supabase?`)) {
+      return;
+    }
+
+    setDeletingCustomerId(cust.id);
+    try {
+      const res = await fetch(`/api/admin/customers?id=${cust.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete customer.');
+      }
+
+      setCustomers((prev) => prev.filter((c) => c.id !== cust.id));
+      setCustomerActionMessage({ type: 'success', text: `Customer "${cust.name || cust.email}" deleted successfully.` });
+      setTimeout(() => setCustomerActionMessage(null), 3500);
+    } catch (err: any) {
+      setCustomerActionMessage({ type: 'error', text: err.message || 'Failed to delete customer.' });
+      setTimeout(() => setCustomerActionMessage(null), 3500);
+    } finally {
+      setDeletingCustomerId(null);
     }
   };
 
@@ -1438,13 +1473,21 @@ export default function AdminDashboardPage() {
         {/* PAGE 5: CUSTOMER DIRECTORY                               */}
         {/* ======================================================== */}
         {activeTab === 'customers' && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in font-sans">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl font-display">
-                  Customer <span className="text-blue-400">Directory</span>
-                </h1>
-                <p className="mt-1 text-xs text-slate-500">{customers.length} registered {customers.length === 1 ? 'customer' : 'customers'}</p>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl font-black uppercase tracking-tight text-white sm:text-3xl font-display">
+                    Customer <span className="text-blue-400">Directory</span>
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1.5 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    SUPABASE LIVE DB
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-slate-400 font-mono">
+                  {filteredCustomers.length} of {customers.length} registered {customers.length === 1 ? 'customer' : 'customers'}
+                </p>
               </div>
 
               <div className="relative w-full sm:w-80">
@@ -1459,20 +1502,64 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
+            {/* Action Alert Banner */}
+            {customerActionMessage && (
+              <div className={`p-4 rounded-2xl border text-xs font-mono flex items-center gap-3 transition-all ${
+                customerActionMessage.type === 'success'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              }`}>
+                {customerActionMessage.type === 'success' ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-rose-400 flex-shrink-0" />
+                )}
+                <span>{customerActionMessage.text}</span>
+              </div>
+            )}
+
             <div className="rounded-3xl bg-[#060913]/95 border border-white/10 shadow-2xl overflow-hidden">
               <div className="divide-y divide-white/5">
-                {filteredCustomers.map((cust) => (
-                  <div key={cust.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
-                    <div>
-                      <div className="font-bold text-white text-sm">{cust.name}</div>
-                      <div className="text-slate-400">{cust.email}</div>
-                    </div>
-                    <div className="flex items-center gap-4 text-zinc-500">
-                      {cust.discordHandle && <span>Discord: <strong className="text-slate-300">{cust.discordHandle}</strong></span>}
-                      <span>Joined {new Date(cust.createdAt).toLocaleDateString()}</span>
-                    </div>
+                {filteredCustomers.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-zinc-500">
+                    No matching customer records found.
                   </div>
-                ))}
+                ) : (
+                  filteredCustomers.map((cust) => (
+                    <div key={cust.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono hover:bg-white/[0.02] transition-colors">
+                      <div className="space-y-0.5">
+                        <div className="font-bold text-white text-sm flex items-center gap-2">
+                          <span>{cust.name}</span>
+                          <span className="text-[10px] font-normal text-zinc-500">({cust.username})</span>
+                        </div>
+                        <div className="text-slate-400 font-mono">{cust.email}</div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4 text-zinc-500">
+                        {cust.discordHandle && (
+                          <span className="bg-white/5 px-2.5 py-1 rounded-lg border border-white/5 text-zinc-300">
+                            Discord: <strong className="text-blue-300">{cust.discordHandle}</strong>
+                          </span>
+                        )}
+                        <span className="text-[11px]">Joined {cust.createdAt ? new Date(cust.createdAt).toLocaleDateString() : 'N/A'}</span>
+
+                        {/* Super Admin Exclusive Delete Button */}
+                        {currentAdmin?.role === 'superadmin' && (
+                          <button
+                            type="button"
+                            disabled={deletingCustomerId === cust.id}
+                            onClick={() => handleDeleteCustomer(cust)}
+                            className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 hover:border-rose-500/40 text-rose-300 hover:text-rose-200 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ml-2"
+                            title="Delete Customer Record (Super Admin Only)"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            <span className="hidden sm:inline">{deletingCustomerId === cust.id ? 'Deleting...' : 'Delete'}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

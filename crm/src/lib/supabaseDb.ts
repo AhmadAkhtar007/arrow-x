@@ -273,6 +273,28 @@ export async function updateSupabaseCustomerProfile(
   }
 }
 
+export async function deleteSupabaseUser(userId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId.trim());
+
+    if (error) {
+      // Fallback: try by email in case userId is an email string
+      const { error: emailErr } = await supabase
+        .from('users')
+        .delete()
+        .ilike('email', userId.trim());
+      return !emailErr;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ====================================================================
 // 2. ORDERS & TRANSACTIONS
 // ====================================================================

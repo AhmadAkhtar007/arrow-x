@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { User, Lock, Shield, CheckCircle2, AlertCircle, Key, AtSign, X } from 'lucide-react';
 
 interface ProfileModalProps {
@@ -16,6 +17,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   currentUser,
   onUserUpdated,
 }) => {
+  const router = useRouter();
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'superadmin';
 
   const [username, setUsername] = useState(currentUser?.username || '');
@@ -75,9 +77,13 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       }
 
       setSuccess(true);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('arrowx:profile-updated', { detail: data.user }));
+      }
       if (onUserUpdated) {
         onUserUpdated(data.user);
       }
+      router.refresh();
 
       setCurrentPassword('');
       setNewPassword('');

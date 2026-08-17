@@ -134,7 +134,7 @@ test('provides a denomination-specific G2A destination for every catalog offer',
       for (const offer of variant.offers) {
         const link = findGiftCardPurchaseLink(offer.priceUsd, links);
         assert.ok(link, `${product.name} / ${variant.name} / ${offer.label} lacks a gift-card destination`);
-        assert.match(link.purchaseUrl, new RegExp(`REWARBLE%20VISA%20Gift%20Card%20${Math.ceil(offer.priceUsd)}%20USD$`));
+        assert.equal(link.purchaseUrl, 'https://www.g2a.com/rewarble-crypto-gift-card-5-aud-by-rewarble-key-global-i10000505309030');
       }
     }
   }

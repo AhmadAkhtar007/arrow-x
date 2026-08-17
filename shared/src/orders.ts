@@ -50,6 +50,9 @@ export function getRequiredGiftCardDenomination(amountUsd: number): number {
   return Math.ceil(amountUsd);
 }
 
+export const G2A_REWARBLE_PURCHASE_URL =
+  'https://www.g2a.com/rewarble-crypto-gift-card-5-aud-by-rewarble-key-global-i10000505309030';
+
 export function createCatalogGiftCardLinks(): GiftCardLink[] {
   const denominations = new Set(
     catalog.flatMap((product) =>
@@ -63,7 +66,7 @@ export function createCatalogGiftCardLinks(): GiftCardLink[] {
     .sort((a, b) => a - b)
     .map((denominationUsd) => ({
       denominationUsd,
-      purchaseUrl: `https://www.g2a.com/search?query=${encodeURIComponent(`REWARBLE VISA Gift Card ${denominationUsd} USD`)}`,
+      purchaseUrl: G2A_REWARBLE_PURCHASE_URL,
     }));
 }
 

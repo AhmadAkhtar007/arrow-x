@@ -89,6 +89,18 @@ export default function CustomerDashboardPage() {
     fetchCustomerData();
   }, [router]);
 
+  // Real-time synchronization for customer profile updates across components
+  useEffect(() => {
+    const handleProfileUpdate = (e: any) => {
+      if (e.detail) {
+        setCurrentUser((prev: any) => (prev ? { ...prev, ...e.detail } : e.detail));
+      }
+    };
+
+    window.addEventListener('arrowx:profile-updated', handleProfileUpdate);
+    return () => window.removeEventListener('arrowx:profile-updated', handleProfileUpdate);
+  }, []);
+
   const handleCopyKey = (key: string, orderId: string) => {
     navigator.clipboard.writeText(key);
     setCopiedKeyId(orderId);

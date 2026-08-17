@@ -44,6 +44,17 @@ export const CrmNavbar: React.FC = () => {
     fetchSession();
   }, [pathname]);
 
+  useEffect(() => {
+    const handleProfileUpdate = (e: any) => {
+      if (e.detail) {
+        setCurrentUser((prev: any) => (prev ? { ...prev, ...e.detail } : e.detail));
+      }
+    };
+
+    window.addEventListener('arrowx:profile-updated', handleProfileUpdate);
+    return () => window.removeEventListener('arrowx:profile-updated', handleProfileUpdate);
+  }, []);
+
   const loginHref = currentPath && currentPath !== '/login'
     ? `/login?returnUrl=${encodeURIComponent(currentPath)}`
     : '/login';

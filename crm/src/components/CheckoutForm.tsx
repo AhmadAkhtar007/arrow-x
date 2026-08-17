@@ -18,7 +18,7 @@ import {
   Info
 } from 'lucide-react';
 import type { PaymentMethod, PaymentSettings, ResolvedSelection } from '@arrowx/shared/orders';
-import { findGiftCardPurchaseLink, getRequiredGiftCardDenomination, createCatalogGiftCardLinks } from '@arrowx/shared/orders';
+import { findGiftCardPurchaseLink, getRequiredGiftCardDenomination, createCatalogGiftCardLinks, G2A_REWARBLE_PURCHASE_URL } from '@arrowx/shared/orders';
 
 interface CheckoutFormProps {
   selection: ResolvedSelection;
@@ -517,51 +517,53 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
           ) : (
             /* GIFT CARD DETAILS */
             <div className="space-y-4 pt-2">
-              <div className={`p-4 rounded-2xl space-y-4 text-xs ${giftCardLink ? 'bg-purple-500/10 border border-purple-500/30' : 'bg-amber-500/10 border border-amber-500/30'}`}>
-                <div className="flex items-center gap-2 font-bold text-purple-300 font-display">
-                  <CreditCard className="h-4 w-4" />
-                  <span>{giftCardLink ? 'Buy on G2A · Redeem through Rewarble' : 'Gift Card Unavailable for This Order'}</span>
+              <div className="p-5 rounded-3xl space-y-4 text-xs bg-purple-500/10 border border-purple-500/30">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 font-bold text-purple-300 font-display text-sm">
+                    <CreditCard className="h-4 w-4 text-purple-400" />
+                    <span>Pay with G2A Rewarble Gift Card</span>
+                  </div>
+                  <span className="rounded-full border border-purple-400/20 bg-purple-500/10 px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-purple-300 font-bold">
+                    Credit Card · PayPal · Apple Pay
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 font-mono">
-                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                    <div className="text-[9px] uppercase tracking-wider text-zinc-500">Order total</div>
-                    <div className="mt-1 text-base font-black text-white">${selection.amountUsd.toFixed(2)}</div>
+                <div className="grid grid-cols-2 gap-3 font-mono">
+                  <div className="rounded-2xl border border-white/10 bg-black/40 p-3.5">
+                    <div className="text-[9px] uppercase tracking-wider text-zinc-500 font-bold">Order Total</div>
+                    <div className="mt-1 text-lg font-black text-white">${selection.amountUsd.toFixed(2)}</div>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-black/30 p-3">
-                    <div className="text-[9px] uppercase tracking-wider text-zinc-500">Required card</div>
-                    <div className="mt-1 text-base font-black text-purple-300">${requiredGiftCardDenomination}</div>
+                  <div className="rounded-2xl border border-purple-400/30 bg-purple-950/30 p-3.5 ring-1 ring-purple-500/20">
+                    <div className="text-[9px] uppercase tracking-wider text-purple-300 font-bold">Select on G2A</div>
+                    <div className="mt-1 text-lg font-black text-purple-300">${requiredGiftCardDenomination} USD</div>
                   </div>
                 </div>
 
-                {giftCardLink ? (
-                  <>
-                    <ol className="list-decimal space-y-1.5 pl-4 text-[11px] leading-relaxed text-zinc-300">
-                      <li>Buy the approved <strong className="text-white">${requiredGiftCardDenomination} Rewarble gift card</strong> through G2A.</li>
-                      <li>Return here after G2A delivers the code.</li>
-                      <li>Paste the complete code below for manual redemption and verification.</li>
-                    </ol>
-                    {giftCardOverage > 0 && (
-                      <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[10px] leading-relaxed text-amber-300">
-                        This card is ${(giftCardOverage).toFixed(2)} above your order total. The excess value is non-refundable and is not returned as store credit.
-                      </p>
-                    )}
-                    <a
-                      href={giftCardLink.purchaseUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-3 font-mono text-xs font-bold text-white transition-colors hover:bg-purple-500"
-                    >
-                      <span>Buy ${requiredGiftCardDenomination} Gift Card on G2A</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  </>
-                ) : (
-                  <div className="flex items-start gap-2 text-[11px] leading-relaxed text-amber-300">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <p>No approved ${requiredGiftCardDenomination} purchase link is configured. Choose Bitcoin, Solana, or USDT TRC-20, or contact support.</p>
-                  </div>
+                <div className="rounded-2xl border border-white/10 bg-black/30 p-4 space-y-2 text-[11px] leading-relaxed text-zinc-300">
+                  <div className="font-mono text-[10px] uppercase font-bold text-zinc-400">Step-by-step instructions:</div>
+                  <ol className="list-decimal space-y-1.5 pl-4 text-zinc-300">
+                    <li>Click the button below to open the official <strong className="text-white">Rewarble Gift Card</strong> listing on G2A.</li>
+                    <li>In the G2A value / denomination dropdown, select the <strong className="text-purple-300">${requiredGiftCardDenomination} USD</strong> card.</li>
+                    <li>Complete checkout on G2A with your preferred payment method.</li>
+                    <li>Once G2A delivers your code, copy and paste it into the field below.</li>
+                  </ol>
+                </div>
+
+                {giftCardOverage > 0 && (
+                  <p className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-[10px] leading-relaxed text-amber-300">
+                    This card is ${(giftCardOverage).toFixed(2)} above your exact order total. The excess value is non-refundable.
+                  </p>
                 )}
+
+                <a
+                  href={giftCardLink?.purchaseUrl || G2A_REWARBLE_PURCHASE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-purple-600 hover:bg-purple-500 px-5 py-3.5 font-mono text-xs font-bold text-white transition-all shadow-[0_0_20px_rgba(168,85,247,0.25)] cursor-pointer"
+                >
+                  <span>Open G2A to Buy ${requiredGiftCardDenomination} USD Card</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </div>
 
               {/* Gift Card Code Input */}
@@ -573,9 +575,8 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
                   type="text"
                   value={giftCardCode}
                   onChange={(e) => setGiftCardCode(e.target.value)}
-                  placeholder={giftCardLink ? 'Paste the complete gift-card code here' : 'Unavailable until an approved link is configured'}
-                  disabled={!giftCardLink}
-                  className="w-full p-3.5 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:border-purple-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Paste the complete gift-card code here (e.g. REW-XXXX-XXXX)"
+                  className="w-full p-3.5 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
             </div>

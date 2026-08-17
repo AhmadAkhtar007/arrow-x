@@ -43,6 +43,11 @@ export default function CustomerDashboardPage() {
   const [ticketSubmitting, setTicketSubmitting] = useState(false);
   const [ticketSuccess, setTicketSuccess] = useState(false);
 
+  // Active Ticket Viewer / Chat Thread Modal
+  const [viewingTicket, setViewingTicket] = useState<RealSupportTicket | null>(null);
+  const [customerReplyText, setCustomerReplyText] = useState('');
+  const [sendingCustomerReply, setSendingCustomerReply] = useState(false);
+
   // 1. Check Session & Load Customer Data on Mount
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -142,6 +147,53 @@ export default function CustomerDashboardPage() {
       console.error('Ticket submit error:', err);
     } finally {
       setTicketSubmitting(false);
+    }
+  };
+
+  // 3. Customer Reply to Active Ticket
+  const handleSendCustomerReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!viewingTicket || !customerReplyText.trim()) return;
+
+    setSendingCustomerReply(true);
+    try {
+      const res = await fetch(`/api/tickets/${viewingTicket.id}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: customerReplyText.trim() }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.ticket) {
+        setTickets((prev) => prev.map((t) => (t.id === viewingTicket.id ? data.ticket : t)));
+        setViewingTicket(data.ticket);
+        setCustomerReplyText('');
+      }
+    } catch (err) {
+      console.error('Customer reply error:', err);
+    } finally {
+      setSendingCustomerReply(false);
+    }
+  };
+
+  // 4. Customer Mark Ticket Resolved
+  const handleCustomerResolveTicket = async (ticketId: string) => {
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Resolved' }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.ticket) {
+        setTickets((prev) => prev.map((t) => (t.id === ticketId ? data.ticket : t)));
+        if (viewingTicket?.id === ticketId) {
+          setViewingTicket(data.ticket);
+        }
+      }
+    } catch (err) {
+      console.error('Resolve ticket error:', err);
     }
   };
 
@@ -419,27 +471,50 @@ export default function CustomerDashboardPage() {
             {tickets.map((tck) => (
               <div
                 key={tck.id}
-                className="p-5 rounded-2xl bg-[#080d0a]/95 border border-white/10 space-y-3 shadow-md"
+                onClick={() => setViewingTicket(tck)}
+                className="p-5 rounded-2xl bg-[#080d0a]/95 border border-white/10 hover:border-emerald-500/30 transition-all cursor-pointer space-y-3 shadow-md group"
               >
                 <div className="flex items-center justify-between text-xs font-mono">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white">{tck.id}</span>
+                    <span className="font-bold text-emerald-400">{tck.id}</span>
+                    {tck.orderId && (
+                      <span className="text-[10px] text-zinc-500 font-normal">
+                        • Order: {tck.orderId.substring(0, 10)}
+                      </span>
+                    )}
                   </div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    tck.status === 'Open' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    tck.status === 'Open' 
+                      ? 'bg-amber-500/20 text-amber-300' 
+                      : tck.status === 'Resolved'
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : tck.status === 'Closed'
+                      ? 'bg-zinc-800 text-zinc-400'
+                      : 'bg-sky-500/20 text-sky-300'
                   }`}>
                     {tck.status}
                   </span>
                 </div>
 
-                <div className="text-sm font-bold text-white">{tck.subject}</div>
+                <div className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                  {tck.subject}
+                </div>
 
                 {/* Latest message snippet */}
                 <div className="p-3 rounded-xl bg-black/60 border border-white/5 text-xs text-zinc-300 space-y-1">
-                  <div className="text-[10px] font-mono text-zinc-500">
-                    Latest update from {tck.messages[tck.messages.length - 1]?.senderName || 'Staff'}:
+                  <div className="text-[10px] font-mono text-zinc-500 flex items-center justify-between">
+                    <span>Latest update from <strong className="text-slate-300">{tck.messages[tck.messages.length - 1]?.senderName || 'Staff'}</strong>:</span>
+                    <span>{tck.messages[tck.messages.length - 1]?.timestamp ? new Date(tck.messages[tck.messages.length - 1].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                   </div>
-                  <p className="font-sans text-zinc-300">{tck.messages[tck.messages.length - 1]?.text}</p>
+                  <p className="font-sans text-zinc-300 line-clamp-2">{tck.messages[tck.messages.length - 1]?.text}</p>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-xs text-emerald-400 font-mono">
+                  <span className="text-[11px] text-zinc-500">Click to open chat thread & reply</span>
+                  <span className="flex items-center gap-1 font-bold group-hover:translate-x-1 transition-transform">
+                    <span>Open Conversation</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </div>
               </div>
             ))}
@@ -532,6 +607,116 @@ export default function CustomerDashboardPage() {
               </form>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* 6. Active Ticket Conversation Thread Modal */}
+      {viewingTicket && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans"
+          onClick={() => setViewingTicket(null)}
+        >
+          <div 
+            className="w-full max-w-2xl bg-[#080d0a] border border-emerald-500/40 rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-white/10 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-emerald-400 font-bold">{viewingTicket.id}</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+                    viewingTicket.status === 'Open'
+                      ? 'bg-amber-500/20 text-amber-300'
+                      : viewingTicket.status === 'Resolved'
+                      ? 'bg-emerald-500/20 text-emerald-300'
+                      : viewingTicket.status === 'Closed'
+                      ? 'bg-zinc-800 text-zinc-400'
+                      : 'bg-sky-500/20 text-sky-300'
+                  }`}>
+                    {viewingTicket.status}
+                  </span>
+                </div>
+                <h3 className="text-base font-bold text-white font-display mt-1">{viewingTicket.subject}</h3>
+                {viewingTicket.orderId && (
+                  <div className="text-xs text-zinc-400 font-mono">Linked Order: {viewingTicket.orderId}</div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {viewingTicket.status !== 'Resolved' && (
+                  <button
+                    type="button"
+                    onClick={() => handleCustomerResolveTicket(viewingTicket.id)}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Mark Solved</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setViewingTicket(null)}
+                  className="text-zinc-400 hover:text-white font-mono text-xs cursor-pointer p-1"
+                >
+                  ✕ Close
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Thread */}
+            <div className="space-y-3.5 overflow-y-auto pr-2 py-2 flex-1 max-h-[380px]">
+              {viewingTicket.messages.map((m) => {
+                const isStaff = m.sender === 'staff';
+                return (
+                  <div
+                    key={m.id}
+                    className={`p-4 rounded-2xl max-w-[85%] text-xs space-y-1.5 ${
+                      isStaff
+                        ? 'bg-blue-600/20 border border-blue-500/30 text-blue-100 mr-auto'
+                        : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-100 ml-auto'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4 font-mono text-[10px]">
+                      <span className="font-bold flex items-center gap-1.5">
+                        <span>{m.senderName}</span>
+                        {isStaff && (
+                          <span className="px-1.5 py-0.2 rounded bg-blue-500/30 text-blue-300 text-[9px] uppercase font-bold">
+                            STAFF
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-zinc-500">
+                        {m.timestamp ? new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+                    <p className="leading-relaxed font-sans text-sm whitespace-pre-wrap">{m.text}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Reply Input */}
+            <form onSubmit={handleSendCustomerReply} className="space-y-2 pt-3 border-t border-white/10">
+              <textarea
+                rows={2}
+                value={customerReplyText}
+                onChange={(e) => setCustomerReplyText(e.target.value)}
+                placeholder="Reply to support staff..."
+                className="w-full p-3 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-sans focus:outline-none focus:border-emerald-500"
+                required
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  type="submit"
+                  disabled={sendingCustomerReply || !customerReplyText.trim()}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-lg cursor-pointer disabled:opacity-50"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span>{sendingCustomerReply ? 'Sending...' : 'Send Message'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

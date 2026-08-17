@@ -85,7 +85,7 @@ export interface RealSupportTicket {
   customerName?: string;
   discordHandle?: string;
   subject: string;
-  status: 'Open' | 'Pending Staff' | 'HWID Approved' | 'Resolved';
+  status: 'Open' | 'Pending Staff' | 'HWID Approved' | 'Resolved' | 'Closed';
   claimedBy?: string | null;
   createdAt: string;
   updatedAt: string;

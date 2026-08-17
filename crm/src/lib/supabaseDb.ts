@@ -385,26 +385,224 @@ export async function getSupabaseTickets(customerEmail?: string): Promise<RealSu
     const { data, error } = await query;
     if (error || !data) return [];
 
-    return data.map((t: any) => ({
-      id: t.id,
-      orderId: t.order_id || undefined,
-      customerEmail: t.customer_email,
-      customerName: t.customer_name,
-      discordHandle: t.discord_handle || undefined,
-      subject: t.subject,
-      status: t.status,
-      createdAt: t.created_at,
-      updatedAt: t.updated_at,
-      messages: (t.ticket_messages || []).map((m: any) => ({
+    return data.map((t: any) => {
+      const messages = (t.ticket_messages || [])
+        .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+        .map((m: any) => ({
+          id: m.id,
+          sender: (m.sender_role === 'agent' ? 'staff' : m.sender_role) as 'customer' | 'staff',
+          senderName: m.sender_name,
+          text: m.text,
+          timestamp: m.timestamp,
+        }));
+
+      return {
+        id: t.id,
+        orderId: t.order_id || undefined,
+        customerEmail: t.customer_email,
+        customerName: t.customer_name,
+        discordHandle: t.discord_handle || undefined,
+        subject: t.subject,
+        status: t.status,
+        claimedBy: t.assigned_to || undefined,
+        createdAt: t.created_at,
+        updatedAt: t.updated_at,
+        messages,
+      };
+    });
+  } catch (err) {
+    console.error('getSupabaseTickets error:', err);
+    return [];
+  }
+}
+
+export async function getSupabaseTicketById(ticketId: string): Promise<RealSupportTicket | null> {
+  try {
+    const { data, error } = await supabase
+      .from('support_tickets')
+      .select(`
+        *,
+        ticket_messages (*)
+      `)
+      .eq('id', ticketId.trim())
+      .maybeSingle();
+
+    if (error || !data) return null;
+
+    const messages = (data.ticket_messages || [])
+      .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      .map((m: any) => ({
         id: m.id,
-        sender: m.sender_role as 'customer' | 'staff',
+        sender: (m.sender_role === 'agent' ? 'staff' : m.sender_role) as 'customer' | 'staff',
         senderName: m.sender_name,
         text: m.text,
         timestamp: m.timestamp,
-      })),
-    }));
-  } catch {
-    return [];
+      }));
+
+    return {
+      id: data.id,
+      orderId: data.order_id || undefined,
+      customerEmail: data.customer_email,
+      customerName: data.customer_name,
+      discordHandle: data.discord_handle || undefined,
+      subject: data.subject,
+      status: data.status,
+      claimedBy: data.assigned_to || undefined,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      messages,
+    };
+  } catch (err) {
+    console.error('getSupabaseTicketById error:', err);
+    return null;
+  }
+}
+
+export async function createSupabaseTicket(data: {
+  id: string;
+  orderId?: string;
+  customerEmail: string;
+  customerName?: string;
+  discordHandle?: string;
+  subject: string;
+  initialMessage: string;
+}): Promise<RealSupportTicket | null> {
+  try {
+    const now = new Date().toISOString();
+    const customerName = data.customerName || data.customerEmail.split('@')[0];
+
+    const { error: ticketError } = await supabase
+      .from('support_tickets')
+      .insert({
+        id: data.id,
+        order_id: data.orderId || null,
+        customer_email: data.customerEmail.toLowerCase().trim(),
+        customer_name: customerName,
+        discord_handle: data.discordHandle || null,
+        subject: data.subject.trim(),
+        status: 'Open',
+        created_at: now,
+        updated_at: now,
+      });
+
+    if (ticketError) {
+      console.error('createSupabaseTicket insert error:', ticketError);
+      return null;
+    }
+
+    const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const { error: messageError } = await supabase
+      .from('ticket_messages')
+      .insert({
+        id: messageId,
+        ticket_id: data.id,
+        sender_role: 'customer',
+        sender_name: customerName,
+        text: data.initialMessage.trim(),
+        timestamp: now,
+      });
+
+    if (messageError) {
+      console.warn('createSupabaseTicket message insert warning:', messageError);
+    }
+
+    return {
+      id: data.id,
+      orderId: data.orderId,
+      customerEmail: data.customerEmail,
+      customerName,
+      discordHandle: data.discordHandle,
+      subject: data.subject,
+      status: 'Open',
+      createdAt: now,
+      updatedAt: now,
+      messages: [
+        {
+          id: messageId,
+          sender: 'customer',
+          senderName: customerName,
+          text: data.initialMessage.trim(),
+          timestamp: now,
+        },
+      ],
+    };
+  } catch (err) {
+    console.error('createSupabaseTicket exception:', err);
+    return null;
+  }
+}
+
+export async function addSupabaseTicketMessage(
+  ticketId: string,
+  message: { sender: 'customer' | 'staff'; senderName: string; text: string },
+  newStatus?: string
+): Promise<RealSupportTicket | null> {
+  try {
+    const now = new Date().toISOString();
+    const roleForDb = message.sender === 'staff' ? 'agent' : 'customer';
+
+    const { error: messageError } = await supabase
+      .from('ticket_messages')
+      .insert({
+        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        ticket_id: ticketId.trim(),
+        sender_role: roleForDb,
+        sender_name: message.senderName,
+        text: message.text.trim(),
+        timestamp: now,
+      });
+
+    if (messageError) {
+      console.error('addSupabaseTicketMessage error:', messageError);
+    }
+
+    // Update ticket updated_at and optionally status
+    const updatePayload: any = { updated_at: now };
+    if (newStatus) {
+      updatePayload.status = newStatus;
+    }
+
+    await supabase
+      .from('support_tickets')
+      .update(updatePayload)
+      .eq('id', ticketId.trim());
+
+    return await getSupabaseTicketById(ticketId);
+  } catch (err) {
+    console.error('addSupabaseTicketMessage exception:', err);
+    return null;
+  }
+}
+
+export async function updateSupabaseTicketStatus(
+  ticketId: string,
+  status: string,
+  assignedTo?: string
+): Promise<RealSupportTicket | null> {
+  try {
+    const now = new Date().toISOString();
+    const updatePayload: any = {
+      status,
+      updated_at: now,
+    };
+    if (assignedTo !== undefined) {
+      updatePayload.assigned_to = assignedTo;
+    }
+
+    const { error } = await supabase
+      .from('support_tickets')
+      .update(updatePayload)
+      .eq('id', ticketId.trim());
+
+    if (error) {
+      console.error('updateSupabaseTicketStatus error:', error);
+      return null;
+    }
+
+    return await getSupabaseTicketById(ticketId);
+  } catch (err) {
+    console.error('updateSupabaseTicketStatus exception:', err);
+    return null;
   }
 }
 

@@ -30,7 +30,12 @@ import {
   createSupabaseAdmin,
   updateSupabaseAdminProfile,
   deleteSupabaseAdmin,
-  deleteSupabaseUser
+  deleteSupabaseUser,
+  getSupabaseTickets,
+  getSupabaseTicketById,
+  createSupabaseTicket,
+  addSupabaseTicketMessage,
+  updateSupabaseTicketStatus
 } from './supabaseDb';
 
 interface DatabaseSchema {
@@ -733,12 +738,29 @@ export async function lockOrderForAdmin(orderId: string, adminId: string, adminN
 }
 
 // --- SUPPORT TICKETS OPERATIONS ---
-export async function getTickets(): Promise<RealSupportTicket[]> {
+export async function getTickets(customerEmail?: string): Promise<RealSupportTicket[]> {
+  try {
+    const supabaseTickets = await getSupabaseTickets(customerEmail);
+    if (supabaseTickets && supabaseTickets.length > 0) return supabaseTickets;
+  } catch (err) {
+    console.warn('[DB] Supabase getTickets fallback:', err);
+  }
+
   const db = initializeDatabase();
+  if (customerEmail) {
+    return db.tickets.filter((t) => t.customerEmail.toLowerCase() === customerEmail.toLowerCase());
+  }
   return db.tickets;
 }
 
 export async function getTicketById(id: string): Promise<RealSupportTicket | null> {
+  try {
+    const supabaseTicket = await getSupabaseTicketById(id);
+    if (supabaseTicket) return supabaseTicket;
+  } catch (err) {
+    console.warn('[DB] Supabase getTicketById fallback:', err);
+  }
+
   const db = initializeDatabase();
   return db.tickets.find((t) => t.id.toLowerCase() === id.toLowerCase()) || null;
 }
@@ -751,19 +773,34 @@ export async function createTicket(data: {
   subject: string;
   initialMessage: string;
 }): Promise<RealSupportTicket> {
-  const db = initializeDatabase();
-  const randomNum = Math.floor(1000 + Math.random() * 9000);
-  const ticketId = `TCK-${randomNum}`;
-
+  const randomNum = Math.floor(10000 + Math.random() * 90000);
+  const ticketId = `ARX-${randomNum}`;
   const now = new Date();
   const timeFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + 
                         now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const customerName = data.customerName || data.customerEmail.split('@')[0];
 
+  try {
+    const supabaseCreated = await createSupabaseTicket({
+      id: ticketId,
+      orderId: data.orderId,
+      customerEmail: data.customerEmail,
+      customerName,
+      discordHandle: data.discordHandle,
+      subject: data.subject,
+      initialMessage: data.initialMessage,
+    });
+    if (supabaseCreated) return supabaseCreated;
+  } catch (err) {
+    console.warn('[DB] Supabase createTicket fallback:', err);
+  }
+
+  const db = initializeDatabase();
   const newTicket: RealSupportTicket = {
     id: ticketId,
     orderId: data.orderId,
     customerEmail: data.customerEmail,
-    customerName: data.customerName || data.customerEmail.split('@')[0],
+    customerName,
     discordHandle: data.discordHandle,
     subject: data.subject,
     status: 'Open',
@@ -773,7 +810,7 @@ export async function createTicket(data: {
       {
         id: `msg_${Date.now()}`,
         sender: 'customer',
-        senderName: data.customerName || 'Customer',
+        senderName: customerName,
         text: data.initialMessage,
         timestamp: timeFormatted,
       }
@@ -789,6 +826,15 @@ export async function addMessageToTicket(
   ticketId: string, 
   message: { sender: 'customer' | 'staff'; senderName: string; text: string }
 ): Promise<RealSupportTicket | null> {
+  const newStatus = message.sender === 'staff' ? 'Open' : 'Pending Staff';
+
+  try {
+    const supabaseUpdated = await addSupabaseTicketMessage(ticketId, message, newStatus);
+    if (supabaseUpdated) return supabaseUpdated;
+  } catch (err) {
+    console.warn('[DB] Supabase addTicketMessage fallback:', err);
+  }
+
   const db = initializeDatabase();
   const index = db.tickets.findIndex((t) => t.id.toLowerCase() === ticketId.toLowerCase());
   if (index === -1) return null;
@@ -805,12 +851,7 @@ export async function addMessageToTicket(
     timestamp: timeFormatted,
   });
 
-  if (message.sender === 'staff') {
-    db.tickets[index].status = 'Open';
-  } else {
-    db.tickets[index].status = 'Pending Staff';
-  }
-
+  db.tickets[index].status = newStatus as any;
   db.tickets[index].updatedAt = 'Just now';
   writeDb(db);
   return db.tickets[index];
@@ -818,14 +859,21 @@ export async function addMessageToTicket(
 
 export async function updateTicketStatus(
   ticketId: string, 
-  status: 'Open' | 'Pending Staff' | 'HWID Approved' | 'Resolved', 
+  status: 'Open' | 'Pending Staff' | 'HWID Approved' | 'Resolved' | 'Closed', 
   staffName?: string
 ): Promise<RealSupportTicket | null> {
+  try {
+    const supabaseUpdated = await updateSupabaseTicketStatus(ticketId, status, staffName);
+    if (supabaseUpdated) return supabaseUpdated;
+  } catch (err) {
+    console.warn('[DB] Supabase updateTicketStatus fallback:', err);
+  }
+
   const db = initializeDatabase();
   const index = db.tickets.findIndex((t) => t.id.toLowerCase() === ticketId.toLowerCase());
   if (index === -1) return null;
 
-  db.tickets[index].status = status;
+  db.tickets[index].status = status as any;
   if (staffName) db.tickets[index].claimedBy = staffName;
   db.tickets[index].updatedAt = 'Just now';
 

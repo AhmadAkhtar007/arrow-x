@@ -38,7 +38,8 @@ import {
   Coins,
   Trash2,
   Edit3,
-  ShieldAlert
+  ShieldAlert,
+  CheckCheck
 } from 'lucide-react';
 import { RealOrder, RealSupportTicket, AdminAccount, UserAccount, PaymentSettings } from '../../lib/types';
 import { ArrowXLogo } from '../../components/ArrowXLogo';
@@ -90,6 +91,9 @@ export default function AdminDashboardPage() {
   const [selectedTicket, setSelectedTicket] = useState<RealSupportTicket | null>(null);
   const [replyText, setReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<'All' | 'Open' | 'Pending Staff' | 'Resolved' | 'Closed'>('All');
+  const [ticketSearchQuery, setTicketSearchQuery] = useState('');
+  const [statusUpdating, setStatusUpdating] = useState(false);
 
   // Team Page Modal States
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
@@ -350,7 +354,7 @@ export default function AdminDashboardPage() {
       });
 
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.ticket) {
         setTickets((prev) => prev.map((t) => (t.id === selectedTicket.id ? data.ticket : t)));
         setSelectedTicket(data.ticket);
         setReplyText('');
@@ -362,7 +366,31 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 9. Customer: Delete Customer (Super Admin Only)
+  // 10. Update Ticket Status (Resolve / Close / Reopen)
+  const handleUpdateTicketStatus = async (ticketId: string, status: 'Open' | 'Pending Staff' | 'HWID Approved' | 'Resolved' | 'Closed') => {
+    setStatusUpdating(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.ticket) {
+        setTickets((prev) => prev.map((t) => (t.id === ticketId ? data.ticket : t)));
+        if (selectedTicket?.id === ticketId) {
+          setSelectedTicket(data.ticket);
+        }
+      }
+    } catch (err) {
+      console.error('Error updating ticket status:', err);
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
+  // 11. Customer: Delete Customer (Super Admin Only)
   const handleDeleteCustomer = async (cust: UserAccount) => {
     if (currentAdmin?.role !== 'superadmin') {
       alert('Only Super Admins have permission to delete customer records.');
@@ -571,6 +599,20 @@ export default function AdminDashboardPage() {
       customer.username.toLowerCase().includes(query) ||
       customer.discordHandle?.toLowerCase().includes(query)
     );
+  });
+
+  const filteredTickets = tickets.filter((tck) => {
+    const matchesStatus = ticketStatusFilter === 'All' || tck.status === ticketStatusFilter;
+    const query = ticketSearchQuery.trim().toLowerCase();
+    if (!query) return matchesStatus;
+    const matchesQuery = 
+      tck.id.toLowerCase().includes(query) ||
+      tck.customerEmail.toLowerCase().includes(query) ||
+      (tck.customerName && tck.customerName.toLowerCase().includes(query)) ||
+      (tck.discordHandle && tck.discordHandle.toLowerCase().includes(query)) ||
+      tck.subject.toLowerCase().includes(query);
+
+    return matchesStatus && matchesQuery;
   });
 
   return (
@@ -1360,108 +1402,297 @@ export default function AdminDashboardPage() {
         {/* PAGE 4: SUPPORT TICKETS & HWID DESK                      */}
         {/* ======================================================== */}
         {activeTab === 'tickets' && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
-                Support <span className="text-blue-400">Desk</span>
-              </h1>
+          <div className="space-y-6 animate-fade-in font-sans">
+            {/* Header & Stats */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
+                    Support <span className="text-blue-400">Desk</span>
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1.5 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    SUPABASE LIVE DB
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-1">
+                  Customer inquiries, HWID reset authorizations, and live assistance threads
+                </p>
+              </div>
+
+              <button
+                onClick={fetchDashboardData}
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 transition-all cursor-pointer flex items-center gap-2 text-xs font-mono"
+                title="Reload from Supabase"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="hidden sm:inline">Refresh Queue</span>
+              </button>
+            </div>
+
+            {/* Filters and Search Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              {/* Status Filter Tabs */}
+              <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/5">
+                {(['All', 'Open', 'Pending Staff', 'Resolved', 'Closed'] as const).map((st) => {
+                  const count = st === 'All' ? tickets.length : tickets.filter((t) => t.status === st).length;
+                  const isActive = ticketStatusFilter === st;
+                  return (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setTicketStatusFilter(st)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span>{st}</span>
+                      <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${
+                        isActive ? 'bg-black/30 text-white' : 'bg-white/10 text-zinc-400'
+                      }`}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="search"
+                  value={ticketSearchQuery}
+                  onChange={(e) => setTicketSearchQuery(e.target.value)}
+                  placeholder="Search ID, email, discord, subject..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-mono focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Queue List */}
-              <div className="lg:col-span-5 p-5 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-3 shadow-xl">
+              <div className="lg:col-span-5 p-5 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-3 shadow-xl flex flex-col">
                 <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <h2 className="text-xs font-mono font-bold uppercase text-white tracking-wider">Queue</h2>
-                  <span className="text-xs font-mono text-zinc-400">{tickets.length} Total</span>
+                  <h2 className="text-xs font-mono font-bold uppercase text-white tracking-wider">
+                    Ticket Queue ({filteredTickets.length})
+                  </h2>
+                  <span className="text-[11px] font-mono text-zinc-400">
+                    Showing {filteredTickets.length} of {tickets.length}
+                  </span>
                 </div>
 
-                <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
-                  {tickets.length === 0 ? (
-                    <div className="py-16 text-center text-xs font-mono text-zinc-600">No support tickets in queue</div>
+                <div className="space-y-2.5 max-h-[620px] overflow-y-auto pr-1 flex-1">
+                  {filteredTickets.length === 0 ? (
+                    <div className="py-20 text-center space-y-2">
+                      <MessageSquare className="h-8 w-8 mx-auto text-zinc-600" />
+                      <p className="text-xs font-mono text-zinc-500">No support tickets found in this view</p>
+                    </div>
                   ) : (
-                    tickets.map((tck) => (
-                      <div
-                        key={tck.id}
-                        onClick={() => setSelectedTicket(tck)}
-                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
-                          selectedTicket?.id === tck.id
-                            ? 'bg-blue-600/15 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
-                            : 'bg-black/50 border-white/10 hover:border-white/20'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-xs font-mono">
-                          <span className="font-bold text-blue-400">{tck.id}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            tck.status === 'Open' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'
-                          }`}>
-                            {tck.status}
-                          </span>
-                        </div>
+                    filteredTickets.map((tck) => {
+                      const isSelected = selectedTicket?.id === tck.id;
+                      const lastMessage = tck.messages && tck.messages.length > 0 
+                        ? tck.messages[tck.messages.length - 1] 
+                        : null;
 
-                        <div className="text-xs font-bold text-white truncate">{tck.subject}</div>
-                        <div className="text-[11px] text-zinc-400 font-mono truncate">{tck.customerEmail}</div>
-                      </div>
-                    ))
+                      let statusBadgeClass = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+                      if (tck.status === 'Open') statusBadgeClass = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                      if (tck.status === 'Pending Staff') statusBadgeClass = 'bg-sky-500/20 text-sky-300 border-sky-500/30';
+                      if (tck.status === 'Resolved') statusBadgeClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                      if (tck.status === 'Closed') statusBadgeClass = 'bg-zinc-800 text-zinc-400 border-zinc-700';
+
+                      return (
+                        <div
+                          key={tck.id}
+                          onClick={() => setSelectedTicket(tck)}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 relative overflow-hidden ${
+                            isSelected
+                              ? 'bg-blue-600/15 border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.25)] ring-1 ring-blue-500/30'
+                              : 'bg-black/50 border-white/10 hover:border-white/20 hover:bg-black/70'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-xs font-mono">
+                            <span className="font-bold text-blue-400 flex items-center gap-1.5">
+                              <span>{tck.id}</span>
+                              {tck.orderId && (
+                                <span className="text-[10px] text-zinc-500 font-normal">
+                                  • {tck.orderId.substring(0, 10)}
+                                </span>
+                              )}
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusBadgeClass}`}>
+                              {tck.status}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 className="text-xs font-bold text-white line-clamp-1">{tck.subject}</h4>
+                            {lastMessage && (
+                              <p className="text-[11px] text-zinc-400 line-clamp-1 mt-0.5 font-sans">
+                                <span className="font-bold text-zinc-300">{lastMessage.senderName}:</span> {lastMessage.text}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono pt-1 border-t border-white/5">
+                            <span className="truncate max-w-[170px]">{tck.customerEmail}</span>
+                            <span>{new Date(tck.updatedAt || tck.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               </div>
 
               {/* Thread Detail */}
-              <div className="lg:col-span-7 p-6 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-4 shadow-xl">
+              <div className="lg:col-span-7 p-6 rounded-3xl bg-[#060913]/95 border border-blue-500/30 space-y-4 shadow-xl flex flex-col justify-between">
                 {selectedTicket ? (
-                  <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
-                      <div>
-                        <div className="text-xs font-mono text-blue-400 font-bold">{selectedTicket.id}</div>
-                        <h3 className="text-base font-bold text-white font-display">{selectedTicket.subject}</h3>
-                        <div className="text-xs text-zinc-400 font-mono">Customer: {selectedTicket.customerEmail}</div>
-                      </div>
-
-                    </div>
-
-                    <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                      {selectedTicket.messages.map((m) => (
-                        <div
-                          key={m.id}
-                          className={`p-3.5 rounded-2xl max-w-[85%] text-xs space-y-1 ${
-                            m.sender === 'staff'
-                              ? 'ml-auto bg-blue-600/25 border border-blue-500/40 text-blue-100'
-                              : 'bg-black/60 border border-white/10 text-zinc-300'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-4 font-mono text-[10px] text-zinc-400">
-                            <span className="font-bold text-white">{m.senderName}</span>
-                            <span>{m.timestamp}</span>
+                  <div className="space-y-4 flex flex-col h-full justify-between">
+                    
+                    {/* Header with Details & Fast Action Bar */}
+                    <div className="space-y-3 border-b border-white/10 pb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-mono text-blue-400 font-bold">{selectedTicket.id}</span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+                              selectedTicket.status === 'Open'
+                                ? 'bg-amber-500/20 text-amber-300'
+                                : selectedTicket.status === 'Resolved'
+                                ? 'bg-emerald-500/20 text-emerald-300'
+                                : selectedTicket.status === 'Closed'
+                                ? 'bg-zinc-800 text-zinc-400'
+                                : 'bg-sky-500/20 text-sky-300'
+                            }`}>
+                              {selectedTicket.status}
+                            </span>
+                            {selectedTicket.claimedBy && (
+                              <span className="text-[11px] font-mono text-zinc-400">
+                                • Handled by <strong className="text-blue-300">{selectedTicket.claimedBy}</strong>
+                              </span>
+                            )}
                           </div>
-                          <p className="leading-relaxed font-sans">{m.text}</p>
+                          <h3 className="text-base font-bold text-white font-display mt-1">{selectedTicket.subject}</h3>
+                          <div className="text-xs text-zinc-400 font-mono flex items-center gap-3 mt-0.5">
+                            <span>Customer: <strong className="text-slate-200">{selectedTicket.customerName || selectedTicket.customerEmail}</strong></span>
+                            {selectedTicket.discordHandle && (
+                              <span>Discord: <strong className="text-blue-300">{selectedTicket.discordHandle}</strong></span>
+                            )}
+                          </div>
                         </div>
-                      ))}
+
+                        {/* Status Action Buttons */}
+                        <div className="flex items-center gap-2">
+                          {selectedTicket.status !== 'Resolved' && (
+                            <button
+                              type="button"
+                              disabled={statusUpdating}
+                              onClick={() => handleUpdateTicketStatus(selectedTicket.id, 'Resolved')}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                              title="Mark issue resolved"
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <span>Resolve</span>
+                            </button>
+                          )}
+
+                          {selectedTicket.status !== 'Closed' && (
+                            <button
+                              type="button"
+                              disabled={statusUpdating}
+                              onClick={() => handleUpdateTicketStatus(selectedTicket.id, 'Closed')}
+                              className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 border border-zinc-700"
+                              title="Close ticket thread"
+                            >
+                              <Lock className="h-3.5 w-3.5" />
+                              <span>Close</span>
+                            </button>
+                          )}
+
+                          {(selectedTicket.status === 'Resolved' || selectedTicket.status === 'Closed') && (
+                            <button
+                              type="button"
+                              disabled={statusUpdating}
+                              onClick={() => handleUpdateTicketStatus(selectedTicket.id, 'Open')}
+                              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                              title="Re-open ticket"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              <span>Reopen</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <form onSubmit={handleSendTicketReply} className="space-y-2 pt-2 border-t border-white/10">
+                    {/* Messages Scroll View */}
+                    <div className="space-y-3.5 max-h-[380px] overflow-y-auto pr-2 py-2 flex-1">
+                      {selectedTicket.messages.map((m) => {
+                        const isStaff = m.sender === 'staff';
+                        return (
+                          <div
+                            key={m.id}
+                            className={`p-4 rounded-2xl max-w-[85%] text-xs space-y-1.5 transition-all ${
+                              isStaff
+                                ? 'ml-auto bg-blue-600/20 border border-blue-500/40 text-blue-100 shadow-md'
+                                : 'bg-black/60 border border-white/10 text-zinc-300'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-4 font-mono text-[10px]">
+                              <span className={`font-bold flex items-center gap-1.5 ${isStaff ? 'text-blue-300' : 'text-zinc-300'}`}>
+                                <span>{m.senderName}</span>
+                                {isStaff && (
+                                  <span className="px-1.5 py-0.2 rounded bg-blue-500/20 border border-blue-500/40 text-[9px] uppercase tracking-wider text-blue-300 font-bold">
+                                    STAFF
+                                  </span>
+                                )}
+                              </span>
+                              <span className="text-zinc-500">
+                                {m.timestamp ? new Date(m.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''}
+                              </span>
+                            </div>
+                            <p className="leading-relaxed font-sans text-sm whitespace-pre-wrap">{m.text}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Reply Box Form */}
+                    <form onSubmit={handleSendTicketReply} className="space-y-2 pt-3 border-t border-white/10">
                       <textarea
                         rows={3}
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="Type response to customer..."
-                        className="w-full p-3 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-sans focus:outline-none focus:border-blue-500"
+                        placeholder={`Reply to ${selectedTicket.customerName || selectedTicket.customerEmail} as ${currentAdmin?.username}...`}
+                        className="w-full p-3.5 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 text-xs font-sans focus:outline-none focus:border-blue-500"
                         required
                       />
-                      <div className="flex justify-end">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-zinc-500 font-mono">
+                          Replying as: <strong className="text-blue-300">{currentAdmin?.username}</strong> ({currentAdmin?.role === 'superadmin' ? 'Super Admin' : 'Admin'})
+                        </span>
                         <button
                           type="submit"
-                          disabled={sendingReply}
-                          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-50"
+                          disabled={sendingReply || !replyText.trim()}
+                          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                           <Send className="h-3.5 w-3.5" />
                           <span>{sendingReply ? 'Sending...' : 'Send Reply'}</span>
                         </button>
                       </div>
                     </form>
+
                   </div>
                 ) : (
-                  <div className="py-20 text-center text-xs font-mono text-zinc-500">
-                    Select a ticket to open conversation thread
+                  <div className="py-32 text-center space-y-3">
+                    <MessageSquare className="h-10 w-10 mx-auto text-zinc-600" />
+                    <h3 className="text-sm font-bold text-white font-display">No Ticket Selected</h3>
+                    <p className="text-xs font-mono text-zinc-500 max-w-xs mx-auto">
+                      Select a ticket from the queue on the left to view customer communication history and reply.
+                    </p>
                   </div>
                 )}
               </div>

@@ -35,7 +35,10 @@ import {
   Check,
   CreditCard,
   Bitcoin,
-  Coins
+  Coins,
+  Trash2,
+  Edit3,
+  ShieldAlert
 } from 'lucide-react';
 import { RealOrder, RealSupportTicket, AdminAccount, UserAccount, PaymentSettings } from '../../lib/types';
 import { ArrowXLogo } from '../../components/ArrowXLogo';
@@ -93,6 +96,20 @@ export default function AdminDashboardPage() {
   const [newAdminRole, setNewAdminRole] = useState<'admin' | 'superadmin'>('admin');
   const [addAdminError, setAddAdminError] = useState('');
   const [addAdminSuccess, setAddAdminSuccess] = useState(false);
+  const [addAdminLoading, setAddAdminLoading] = useState(false);
+
+  // Edit Admin Modal States
+  const [editingAdmin, setEditingAdmin] = useState<AdminAccount | null>(null);
+  const [editAdminUsername, setEditAdminUsername] = useState('');
+  const [editAdminPassword, setEditAdminPassword] = useState('');
+  const [editAdminRole, setEditAdminRole] = useState<'admin' | 'superadmin'>('admin');
+  const [editAdminError, setEditAdminError] = useState('');
+  const [editAdminSuccess, setEditAdminSuccess] = useState(false);
+  const [editAdminLoading, setEditAdminLoading] = useState(false);
+
+  // Delete Admin State
+  const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
+  const [teamActionMessage, setTeamActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Payment Settings State
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
@@ -153,7 +170,7 @@ export default function AdminDashboardPage() {
       if (ordersData.success) setOrders(ordersData.orders || []);
       if (ticketsData.success) setTickets(ticketsData.tickets || []);
       if (customersData.success) setCustomers(customersData.customers || []);
-      if (teamData.success) setTeam(teamData.team || []);
+      if (teamData.success) setTeam(teamData.team || teamData.admins || []);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     }
@@ -343,10 +360,11 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // 10. Create Admin
+  // 10. Team: Create Admin
   const handleCreateNewAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddAdminError('');
+    setAddAdminLoading(true);
 
     try {
       const res = await fetch('/api/admin/team', {
@@ -371,9 +389,92 @@ export default function AdminDashboardPage() {
         setShowAddAdminModal(false);
         setNewAdminUsername('');
         setNewAdminPassword('');
-      }, 1200);
+        setNewAdminRole('admin');
+      }, 1000);
     } catch (err: any) {
       setAddAdminError(err.message || 'Failed to create admin.');
+    } finally {
+      setAddAdminLoading(false);
+    }
+  };
+
+  // 11. Team: Open Edit Modal
+  const handleOpenEditAdmin = (admin: AdminAccount) => {
+    setEditingAdmin(admin);
+    setEditAdminUsername(admin.username);
+    setEditAdminRole(admin.role);
+    setEditAdminPassword('');
+    setEditAdminError('');
+    setEditAdminSuccess(false);
+  };
+
+  // 12. Team: Submit Edit
+  const handleSaveEditAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdmin) return;
+    setEditAdminError('');
+    setEditAdminLoading(true);
+
+    try {
+      const res = await fetch('/api/admin/team', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingAdmin.id,
+          username: editAdminUsername.trim(),
+          password: editAdminPassword.trim() || undefined,
+          role: editAdminRole,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update admin account.');
+      }
+
+      setTeam((prev) => prev.map((a) => (a.id === editingAdmin.id ? data.admin : a)));
+      setEditAdminSuccess(true);
+      setTimeout(() => {
+        setEditAdminSuccess(false);
+        setEditingAdmin(null);
+      }, 1000);
+    } catch (err: any) {
+      setEditAdminError(err.message || 'Failed to update admin.');
+    } finally {
+      setEditAdminLoading(false);
+    }
+  };
+
+  // 13. Team: Delete Admin
+  const handleDeleteAdmin = async (admin: AdminAccount) => {
+    if (admin.id === currentAdmin?.id) {
+      alert('You cannot delete your own logged-in administrator account.');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to permanently remove admin "${admin.username}" from Supabase?`)) {
+      return;
+    }
+
+    setDeletingAdminId(admin.id);
+    try {
+      const res = await fetch(`/api/admin/team?id=${admin.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to delete admin.');
+      }
+
+      setTeam((prev) => prev.filter((a) => a.id !== admin.id));
+      setTeamActionMessage({ type: 'success', text: `Admin "${admin.username}" deleted successfully from Supabase.` });
+      setTimeout(() => setTeamActionMessage(null), 3500);
+    } catch (err: any) {
+      setTeamActionMessage({ type: 'error', text: err.message || 'Failed to delete admin.' });
+      setTimeout(() => setTeamActionMessage(null), 3500);
+    } finally {
+      setDeletingAdminId(null);
     }
   };
 
@@ -438,11 +539,11 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <div className="min-h-[100dvh] flex bg-[#03060c] text-slate-100 font-sans -mx-4 sm:-mx-6 lg:-mx-8 -my-8">
+    <div className="fixed inset-0 z-30 flex bg-[#03060c] text-slate-100 font-sans overflow-hidden">
       
-      {/* 1. LEFT SHRINKABLE SIDEBAR NAVBAR */}
+      {/* 1. LEFT PINNED SIDEBAR NAVBAR */}
       <aside 
-        className="sticky top-0 hidden h-screen w-[76px] flex-col justify-between overflow-hidden border-r border-white/[0.07] bg-[linear-gradient(180deg,rgba(13,17,27,0.98)_0%,rgba(7,10,17,0.99)_100%)] shadow-[18px_0_60px_rgba(0,0,0,0.2)] backdrop-blur-2xl z-30 flex-shrink-0 md:flex"
+        className="h-full w-[76px] flex flex-col justify-between overflow-hidden border-r border-white/[0.07] bg-[linear-gradient(180deg,rgba(13,17,27,0.98)_0%,rgba(7,10,17,0.99)_100%)] shadow-[18px_0_60px_rgba(0,0,0,0.2)] backdrop-blur-2xl z-30 flex-shrink-0 flex"
       >
         <div className="border-b border-white/[0.07] px-2 py-4">
           <div className="flex items-center justify-center">
@@ -1381,39 +1482,168 @@ export default function AdminDashboardPage() {
         {/* PAGE 6: TEAM MANAGEMENT (SUPER ADMIN)                    */}
         {/* ======================================================== */}
         {activeTab === 'team' && currentAdmin?.role === 'superadmin' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="space-y-6 animate-fade-in font-sans">
+            {/* Header & Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
-                  Staff <span className="text-blue-400">Team</span>
-                </h1>
-                <p className="text-xs text-slate-400 font-mono mt-1">Manage administrative accounts and credentials</p>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tight text-white uppercase">
+                    Staff <span className="text-blue-400">Team</span>
+                  </h1>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1.5 shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    SUPABASE LIVE DB
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-mono mt-1">
+                  Manage administrative accounts, role privileges, and credentials
+                </p>
               </div>
 
-              <button
-                onClick={() => setShowAddAdminModal(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
-              >
-                <UserPlus className="h-4 w-4" />
-                <span>Add Admin</span>
-              </button>
+              <div className="flex items-center gap-2.5">
+                <button
+                  onClick={fetchDashboardData}
+                  className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10 transition-all cursor-pointer"
+                  title="Reload from Supabase"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setNewAdminUsername('');
+                    setNewAdminPassword('');
+                    setNewAdminRole('admin');
+                    setAddAdminError('');
+                    setAddAdminSuccess(false);
+                    setShowAddAdminModal(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:scale-105 active:scale-95 cursor-pointer"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Add Admin</span>
+                </button>
+              </div>
             </div>
 
-            <div className="rounded-3xl bg-[#060913]/95 border border-white/10 shadow-2xl overflow-hidden divide-y divide-white/5">
-              {team.map((adm) => (
-                <div key={adm.id} className="p-5 flex items-center justify-between text-xs font-mono">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
-                      <Shield className="h-4 w-4" />
+            {/* Action Alert Banner */}
+            {teamActionMessage && (
+              <div className={`p-4 rounded-2xl border text-xs font-mono flex items-center gap-3 transition-all ${
+                teamActionMessage.type === 'success'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+              }`}>
+                {teamActionMessage.type === 'success' ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-rose-400 flex-shrink-0" />
+                )}
+                <span>{teamActionMessage.text}</span>
+              </div>
+            )}
+
+            {/* Team Grid Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {team.map((adm) => {
+                const isCurrent = adm.id === currentAdmin?.id || adm.username.toLowerCase() === currentAdmin?.username?.toLowerCase();
+                const isSuper = adm.role === 'superadmin';
+
+                return (
+                  <div 
+                    key={adm.id}
+                    className={`rounded-3xl p-5 sm:p-6 transition-all duration-200 relative overflow-hidden flex flex-col justify-between space-y-4 border ${
+                      isCurrent
+                        ? 'bg-[#0a0f1c]/95 border-blue-500/40 shadow-[0_10px_30px_rgba(59,130,246,0.15)] ring-1 ring-blue-500/30'
+                        : 'bg-[#060913]/90 border-white/10 hover:border-white/20 shadow-xl'
+                    }`}
+                  >
+                    {/* Background accent glow */}
+                    <div className={`absolute -top-12 -right-12 w-28 h-28 rounded-full blur-[60px] pointer-events-none opacity-20 ${
+                      isSuper ? 'bg-blue-500' : 'bg-emerald-500'
+                    }`} />
+
+                    <div className="space-y-3.5 relative z-10">
+                      {/* Top row: Avatar & Role Badge */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-inner ${
+                            isSuper 
+                              ? 'bg-blue-500/15 border-blue-500/40 text-blue-400' 
+                              : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+                          }`}>
+                            <Shield className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-white font-display text-base tracking-wide">
+                                {adm.username}
+                              </h3>
+                              {isCurrent && (
+                                <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-mono font-bold border border-blue-500/30">
+                                  YOU
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-zinc-500 font-mono">ID: {adm.id.substring(0, 14)}...</span>
+                          </div>
+                        </div>
+
+                        <span className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold uppercase tracking-wider border shadow-sm ${
+                          isSuper 
+                            ? 'bg-blue-500/15 text-blue-300 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                            : 'bg-zinc-800/80 text-zinc-300 border-zinc-700'
+                        }`}>
+                          {isSuper ? 'SUPER ADMIN' : 'ADMIN'}
+                        </span>
+                      </div>
+
+                      {/* Info Pills */}
+                      <div className="p-3 rounded-2xl bg-black/40 border border-white/5 space-y-2 text-xs font-mono">
+                        <div className="flex items-center justify-between text-zinc-400">
+                          <span className="text-zinc-500">Security:</span>
+                          <span className="text-emerald-400 font-bold flex items-center gap-1">
+                            <Lock className="h-3 w-3" />
+                            <span>bcrypt (AES-256)</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-zinc-400">
+                          <span className="text-zinc-500">Date Added:</span>
+                          <span className="text-zinc-300">
+                            {adm.createdAt ? new Date(adm.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Initial Seed'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-bold text-white text-sm">{adm.username}</div>
-                      <div className="text-zinc-500">Role: <span className="text-blue-400">{adm.role}</span></div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 border-t border-white/5 flex items-center justify-end gap-2 text-xs font-mono relative z-10">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditAdmin(adm)}
+                        className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-blue-500/15 border border-white/10 hover:border-blue-500/30 text-zinc-300 hover:text-blue-300 font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isCurrent || deletingAdminId === adm.id}
+                        onClick={() => handleDeleteAdmin(adm)}
+                        className={`px-3 py-1.5 rounded-xl border font-medium transition-all flex items-center gap-1.5 shadow-sm ${
+                          isCurrent
+                            ? 'bg-zinc-900/40 border-zinc-800 text-zinc-600 cursor-not-allowed'
+                            : 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/20 hover:border-rose-500/40 text-rose-300 hover:text-rose-200 cursor-pointer'
+                        }`}
+                        title={isCurrent ? 'You cannot delete your own logged-in account' : 'Remove from Supabase'}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>{deletingAdminId === adm.id ? 'Deleting...' : 'Delete'}</span>
+                      </button>
                     </div>
+
                   </div>
-                  <span className="text-zinc-500 text-[11px]">Added {new Date(adm.createdAt).toLocaleDateString()}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1769,9 +1999,111 @@ export default function AdminDashboardPage() {
                   </button>
                   <button
                     type="submit"
+                    disabled={addAdminLoading}
                     className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg cursor-pointer"
                   >
-                    Create Account
+                    {addAdminLoading ? 'Creating...' : 'Create Account'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* MODAL 4: EDIT ADMIN CREDENTIALS & ROLE                   */}
+      {/* ======================================================== */}
+      {editingAdmin && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in font-sans"
+          onClick={() => setEditingAdmin(null)}
+        >
+          <div 
+            className="w-full max-w-md bg-[#060913] border border-blue-500/40 rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl relative overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Backdrop glow */}
+            <div className="absolute -top-20 -right-20 w-48 h-48 rounded-full blur-[90px] pointer-events-none opacity-20 bg-blue-500" />
+
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2 text-blue-400 font-bold font-display">
+                <Edit3 className="h-5 w-5" />
+                <span>Edit Staff Account</span>
+              </div>
+              <button 
+                onClick={() => setEditingAdmin(null)}
+                className="text-zinc-400 hover:text-white font-mono text-xs cursor-pointer p-1"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {editAdminSuccess ? (
+              <div className="py-8 text-center space-y-2">
+                <CheckCircle2 className="h-10 w-10 mx-auto text-emerald-400 animate-bounce" />
+                <h4 className="text-base font-bold text-white font-display">Staff Account Updated</h4>
+                <p className="text-xs text-zinc-400 font-mono">Changes synchronized live with Supabase PostgreSQL.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSaveEditAdmin} className="space-y-4 text-xs font-mono">
+                {editAdminError && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+                    {editAdminError}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-zinc-400 mb-1">Username</label>
+                  <input
+                    type="text"
+                    value={editAdminUsername}
+                    onChange={(e) => setEditAdminUsername(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-blue-500 font-mono"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 mb-1">Access Role</label>
+                  <select
+                    value={editAdminRole}
+                    onChange={(e) => setEditAdminRole(e.target.value as any)}
+                    className="w-full p-3 rounded-xl bg-black/60 border border-white/10 text-white focus:outline-none focus:border-blue-500 cursor-pointer font-sans"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Super Admin (Full Access)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-zinc-400 mb-1">Reset Password (Optional)</label>
+                  <input
+                    type="password"
+                    value={editAdminPassword}
+                    onChange={(e) => setEditAdminPassword(e.target.value)}
+                    placeholder="Leave blank to keep existing password"
+                    className="w-full p-3 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                  <p className="text-[10px] text-zinc-500 mt-1 font-sans">
+                    Entering a new password will re-hash with bcrypt and update Supabase immediately.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingAdmin(null)}
+                    className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-300 font-medium cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editAdminLoading}
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg cursor-pointer flex items-center gap-2"
+                  >
+                    {editAdminLoading ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>

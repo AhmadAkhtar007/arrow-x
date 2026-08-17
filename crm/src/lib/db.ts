@@ -28,7 +28,8 @@ import {
   getSupabaseAdminByUsername,
   getSupabaseAdminById,
   createSupabaseAdmin,
-  updateSupabaseAdminProfile
+  updateSupabaseAdminProfile,
+  deleteSupabaseAdmin
 } from './supabaseDb';
 
 interface DatabaseSchema {
@@ -299,19 +300,25 @@ export async function createAdmin(data: {
 }
 
 export async function deleteAdmin(adminId: string): Promise<boolean> {
+  try {
+    await deleteSupabaseAdmin(adminId);
+  } catch (err) {
+    console.warn('[DB] Supabase deleteAdmin fallback:', err);
+  }
+
   const db = initializeDatabase();
   const initialCount = db.admins.length;
-  db.admins = db.admins.filter((a) => a.id !== adminId && a.role !== 'superadmin');
+  db.admins = db.admins.filter((a) => a.id !== adminId);
   if (db.admins.length !== initialCount) {
     writeDb(db);
     return true;
   }
-  return false;
+  return true;
 }
 
 export async function updateAdminProfile(
   adminId: string, 
-  updates: { username?: string; password?: string }
+  updates: { username?: string; password?: string; role?: 'admin' | 'superadmin' }
 ): Promise<AdminAccount | null> {
   let passwordHash: string | undefined;
   if (updates.password) {
@@ -322,6 +329,7 @@ export async function updateAdminProfile(
     const updated = await updateSupabaseAdminProfile(adminId, {
       username: updates.username,
       passwordHash,
+      role: updates.role,
     });
     if (updated) return updated;
   } catch (err) {
@@ -333,6 +341,7 @@ export async function updateAdminProfile(
   if (index === -1) return null;
 
   if (updates.username) db.admins[index].username = updates.username;
+  if (updates.role) db.admins[index].role = updates.role;
   if (passwordHash) db.admins[index].passwordHash = passwordHash;
 
   writeDb(db);

@@ -582,12 +582,13 @@ export async function createSupabaseAdmin(data: {
 
 export async function updateSupabaseAdminProfile(
   adminId: string,
-  updates: { username?: string; passwordHash?: string }
+  updates: { username?: string; passwordHash?: string; role?: 'admin' | 'superadmin' }
 ): Promise<AdminAccount | null> {
   try {
     const payload: any = {};
     if (updates.username) payload.username = updates.username.trim();
     if (updates.passwordHash) payload.password_hash = updates.passwordHash;
+    if (updates.role) payload.role = updates.role;
 
     const { data: updated, error } = await supabase
       .from('admin_accounts')
@@ -607,5 +608,18 @@ export async function updateSupabaseAdminProfile(
     };
   } catch {
     return null;
+  }
+}
+
+export async function deleteSupabaseAdmin(adminId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('admin_accounts')
+      .delete()
+      .eq('id', adminId);
+
+    return !error;
+  } catch {
+    return false;
   }
 }

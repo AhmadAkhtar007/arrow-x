@@ -173,15 +173,16 @@ CREATE POLICY "Admin accounts access"
 -- SEED INITIAL DATA
 -- ====================================================================
 
--- 1. Seed LivingLegend Superadmin Account (Password: Admin123)
+-- 1. Seed All 4 Superadmin Accounts (Password: Admin123)
 INSERT INTO public.admin_accounts (id, username, password_hash, role)
-VALUES (
-  'adm_superadmin_001',
-  'LivingLegend',
-  '$2a$10$x8mflL0WqQdGvhc9QyY2m.7GvE6PmsUeM54Z27x3c6iC5f3gqY3I2', -- bcrypt hash for Admin123
-  'superadmin'
-)
-ON CONFLICT (username) DO NOTHING;
+VALUES 
+  ('adm_super_01', 'LivingLegend', '$2a$10$x8mflL0WqQdGvhc9QyY2m.7GvE6PmsUeM54Z27x3c6iC5f3gqY3I2', 'superadmin'),
+  ('adm_super_02', 'Mimester', '$2a$10$x8mflL0WqQdGvhc9QyY2m.7GvE6PmsUeM54Z27x3c6iC5f3gqY3I2', 'superadmin'),
+  ('adm_super_03', 'Rapz', '$2a$10$x8mflL0WqQdGvhc9QyY2m.7GvE6PmsUeM54Z27x3c6iC5f3gqY3I2', 'superadmin'),
+  ('adm_super_04', 'Gadhzi', '$2a$10$x8mflL0WqQdGvhc9QyY2m.7GvE6PmsUeM54Z27x3c6iC5f3gqY3I2', 'superadmin')
+ON CONFLICT (username) DO UPDATE SET
+  password_hash = EXCLUDED.password_hash,
+  role = EXCLUDED.role;
 
 -- 2. Seed Default Payment Settings
 INSERT INTO public.payment_settings (

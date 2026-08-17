@@ -436,3 +436,176 @@ export async function getSupabasePaymentSettings(): Promise<PaymentSettings | nu
     };
   }
 }
+
+// ====================================================================
+// 5. ADMIN ACCOUNTS (LivingLegend, Mimester, Rapz, Gadhzi)
+// ====================================================================
+const DEFAULT_SUPERADMINS = [
+  { id: 'adm_super_01', username: 'LivingLegend', role: 'superadmin' as const },
+  { id: 'adm_super_02', username: 'Mimester', role: 'superadmin' as const },
+  { id: 'adm_super_03', username: 'Rapz', role: 'superadmin' as const },
+  { id: 'adm_super_04', username: 'Gadhzi', role: 'superadmin' as const },
+];
+
+export async function getSupabaseAdminByUsername(username: string): Promise<AdminAccount | null> {
+  try {
+    const normalizedUsername = username.trim();
+    const { data, error } = await supabase
+      .from('admin_accounts')
+      .select('*')
+      .ilike('username', normalizedUsername)
+      .maybeSingle();
+
+    if (error || !data) {
+      // Check if this is one of the 4 configured superadmins that needs auto-seeding
+      const matched = DEFAULT_SUPERADMINS.find(
+        (a) => a.username.toLowerCase() === normalizedUsername.toLowerCase()
+      );
+      if (matched) {
+        const bcrypt = (await import('bcryptjs')).default;
+        const passwordHash = await bcrypt.hash('Admin123', 10);
+        const newAdmin: AdminAccount = {
+          id: matched.id,
+          username: matched.username,
+          passwordHash,
+          role: matched.role,
+          createdAt: new Date().toISOString(),
+        };
+        await createSupabaseAdmin(newAdmin).catch(() => {});
+        return newAdmin;
+      }
+      return null;
+    }
+
+    return {
+      id: data.id,
+      username: data.username,
+      passwordHash: data.password_hash,
+      role: data.role as 'admin' | 'superadmin',
+      createdAt: data.created_at,
+    };
+  } catch (err) {
+    console.error('getSupabaseAdminByUsername error:', err);
+    return null;
+  }
+}
+
+export async function getSupabaseAdminById(id: string): Promise<AdminAccount | null> {
+  try {
+    const { data, error } = await supabase
+      .from('admin_accounts')
+      .select('*')
+      .eq('id', id.trim())
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return {
+      id: data.id,
+      username: data.username,
+      passwordHash: data.password_hash,
+      role: data.role as 'admin' | 'superadmin',
+      createdAt: data.created_at,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getSupabaseAdmins(): Promise<AdminAccount[]> {
+  try {
+    const { data, error } = await supabase
+      .from('admin_accounts')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      // Auto-ensure all 4 superadmins exist
+      const bcrypt = (await import('bcryptjs')).default;
+      const initialAdmins: AdminAccount[] = [];
+      for (const a of DEFAULT_SUPERADMINS) {
+        const passwordHash = await bcrypt.hash('Admin123', 10);
+        const admin: AdminAccount = {
+          id: a.id,
+          username: a.username,
+          passwordHash,
+          role: a.role,
+          createdAt: new Date().toISOString(),
+        };
+        await createSupabaseAdmin(admin).catch(() => {});
+        initialAdmins.push(admin);
+      }
+      return initialAdmins;
+    }
+
+    return data.map((a: any) => ({
+      id: a.id,
+      username: a.username,
+      passwordHash: a.password_hash,
+      role: a.role as 'admin' | 'superadmin',
+      createdAt: a.created_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function createSupabaseAdmin(data: {
+  id?: string;
+  username: string;
+  passwordHash: string;
+  role: 'admin' | 'superadmin';
+}): Promise<AdminAccount> {
+  const id = data.id || `adm_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const { data: created, error } = await supabase
+    .from('admin_accounts')
+    .upsert({
+      id,
+      username: data.username.trim(),
+      password_hash: data.passwordHash,
+      role: data.role,
+    })
+    .select()
+    .single();
+
+  if (error || !created) {
+    throw new Error(error?.message || 'Failed to create admin in database.');
+  }
+
+  return {
+    id: created.id,
+    username: created.username,
+    passwordHash: created.password_hash,
+    role: created.role as 'admin' | 'superadmin',
+    createdAt: created.created_at,
+  };
+}
+
+export async function updateSupabaseAdminProfile(
+  adminId: string,
+  updates: { username?: string; passwordHash?: string }
+): Promise<AdminAccount | null> {
+  try {
+    const payload: any = {};
+    if (updates.username) payload.username = updates.username.trim();
+    if (updates.passwordHash) payload.password_hash = updates.passwordHash;
+
+    const { data: updated, error } = await supabase
+      .from('admin_accounts')
+      .update(payload)
+      .eq('id', adminId)
+      .select()
+      .maybeSingle();
+
+    if (error || !updated) return null;
+
+    return {
+      id: updated.id,
+      username: updated.username,
+      passwordHash: updated.password_hash,
+      role: updated.role as 'admin' | 'superadmin',
+      createdAt: updated.created_at,
+    };
+  } catch {
+    return null;
+  }
+}

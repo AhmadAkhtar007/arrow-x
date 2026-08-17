@@ -7,8 +7,8 @@ import { Lock, User, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('LivingLegend');
-  const [password, setPassword] = useState('Admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          identifier: username,
+          identifier: username.trim(),
           password,
           isAdminLogin: true,
         }),
@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="LivingLegend"
+                placeholder="Enter administrative username"
                 className="w-full pl-10 pr-4 py-3 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-all font-bold"
                 required
               />
@@ -95,7 +95,7 @@ export default function AdminLoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Enter security password"
                 className="w-full pl-10 pr-4 py-3 rounded-2xl bg-black/60 border border-white/10 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-all font-bold"
                 required
               />

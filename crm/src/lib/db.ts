@@ -23,7 +23,12 @@ import {
   generateSupabaseOtp, 
   verifySupabaseOtp, 
   upsertSupabaseOAuthCustomer,
-  updateSupabaseCustomerProfile
+  updateSupabaseCustomerProfile,
+  getSupabaseAdmins,
+  getSupabaseAdminByUsername,
+  getSupabaseAdminById,
+  createSupabaseAdmin,
+  updateSupabaseAdminProfile
 } from './supabaseDb';
 
 interface DatabaseSchema {
@@ -95,12 +100,33 @@ function createBaselineDatabase(): DatabaseSchema {
   return {
     admins: [
       {
-        id: 'admin_super_01',
+        id: 'adm_super_01',
         username: 'LivingLegend',
         passwordHash,
         role: 'superadmin',
         createdAt: new Date().toISOString(),
-      }
+      },
+      {
+        id: 'adm_super_02',
+        username: 'Mimester',
+        passwordHash,
+        role: 'superadmin',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'adm_super_03',
+        username: 'Rapz',
+        passwordHash,
+        role: 'superadmin',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'adm_super_04',
+        username: 'Gadhzi',
+        passwordHash,
+        role: 'superadmin',
+        createdAt: new Date().toISOString(),
+      },
     ],
     users: [],
     orders: [],
@@ -109,7 +135,7 @@ function createBaselineDatabase(): DatabaseSchema {
   };
 }
 
-// Initialize database with directory, seed Super Admin, and seed Payment Settings (Serverless / Read-Only Safe)
+// Initialize database with directory, seed Super Admins, and seed Payment Settings (Serverless / Read-Only Safe)
 export function initializeDatabase(): DatabaseSchema {
   try {
     if (!fs.existsSync(DB_DIR)) {
@@ -130,20 +156,30 @@ export function initializeDatabase(): DatabaseSchema {
     const parsed = JSON.parse(raw);
     let mutated = false;
     
-    // Ensure Super Admin exists
-    const hasSuperAdmin = parsed.admins?.some((a: AdminAccount) => a.username.toLowerCase() === 'livinglegend');
-    if (!hasSuperAdmin) {
-      const salt = bcrypt.genSaltSync(10);
-      const passwordHash = bcrypt.hashSync('Admin123', salt);
-      if (!parsed.admins) parsed.admins = [];
-      parsed.admins.push({
-        id: 'admin_super_01',
-        username: 'LivingLegend',
-        passwordHash,
-        role: 'superadmin',
-        createdAt: new Date().toISOString(),
-      });
-      mutated = true;
+    // Ensure all 4 Super Admins exist
+    const defaultSuperadmins = [
+      { id: 'adm_super_01', username: 'LivingLegend' },
+      { id: 'adm_super_02', username: 'Mimester' },
+      { id: 'adm_super_03', username: 'Rapz' },
+      { id: 'adm_super_04', username: 'Gadhzi' },
+    ];
+
+    if (!parsed.admins) parsed.admins = [];
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync('Admin123', salt);
+
+    for (const superadmin of defaultSuperadmins) {
+      const exists = parsed.admins.some((a: AdminAccount) => a.username.toLowerCase() === superadmin.username.toLowerCase());
+      if (!exists) {
+        parsed.admins.push({
+          id: superadmin.id,
+          username: superadmin.username,
+          passwordHash,
+          role: 'superadmin',
+          createdAt: new Date().toISOString(),
+        });
+        mutated = true;
+      }
     }
 
     if (!parsed.paymentSettings) {
@@ -199,16 +235,28 @@ export async function updatePaymentSettings(updates: Partial<PaymentSettings>): 
 
 // --- ADMIN OPERATIONS ---
 export async function getAdmins(): Promise<AdminAccount[]> {
+  try {
+    const admins = await getSupabaseAdmins();
+    if (admins && admins.length > 0) return admins;
+  } catch {}
   const db = initializeDatabase();
   return db.admins;
 }
 
 export async function getAdminByUsername(username: string): Promise<AdminAccount | null> {
+  try {
+    const admin = await getSupabaseAdminByUsername(username);
+    if (admin) return admin;
+  } catch {}
   const db = initializeDatabase();
   return db.admins.find((a) => a.username.toLowerCase() === username.toLowerCase()) || null;
 }
 
 export async function getAdminById(id: string): Promise<AdminAccount | null> {
+  try {
+    const admin = await getSupabaseAdminById(id);
+    if (admin) return admin;
+  } catch {}
   const db = initializeDatabase();
   return db.admins.find((a) => a.id === id) || null;
 }
@@ -218,6 +266,17 @@ export async function createAdmin(data: {
   password: string;
   role: 'admin' | 'superadmin';
 }): Promise<AdminAccount> {
+  const passwordHash = await bcrypt.hash(data.password, 10);
+  try {
+    return await createSupabaseAdmin({
+      username: data.username,
+      passwordHash,
+      role: data.role,
+    });
+  } catch (err) {
+    console.warn('[DB] Supabase createAdmin fallback to local:', err);
+  }
+
   const db = initializeDatabase();
   const existing = db.admins.find(
     (a) => a.username.toLowerCase() === data.username.toLowerCase()
@@ -226,7 +285,6 @@ export async function createAdmin(data: {
     throw new Error('An admin with this username already exists.');
   }
 
-  const passwordHash = await bcrypt.hash(data.password, 10);
   const newAdmin: AdminAccount = {
     id: `admin_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     username: data.username,
@@ -255,14 +313,27 @@ export async function updateAdminProfile(
   adminId: string, 
   updates: { username?: string; password?: string }
 ): Promise<AdminAccount | null> {
+  let passwordHash: string | undefined;
+  if (updates.password) {
+    passwordHash = await bcrypt.hash(updates.password, 10);
+  }
+
+  try {
+    const updated = await updateSupabaseAdminProfile(adminId, {
+      username: updates.username,
+      passwordHash,
+    });
+    if (updated) return updated;
+  } catch (err) {
+    console.warn('[DB] Supabase updateAdminProfile fallback to local:', err);
+  }
+
   const db = initializeDatabase();
   const index = db.admins.findIndex((a) => a.id === adminId);
   if (index === -1) return null;
 
   if (updates.username) db.admins[index].username = updates.username;
-  if (updates.password) {
-    db.admins[index].passwordHash = await bcrypt.hash(updates.password, 10);
-  }
+  if (passwordHash) db.admins[index].passwordHash = passwordHash;
 
   writeDb(db);
   return db.admins[index];

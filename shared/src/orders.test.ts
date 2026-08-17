@@ -14,15 +14,15 @@ import {
 } from './orders.ts';
 
 test('resolves valid product, variant, and offer from catalog with server authority', () => {
-  const selection = resolveOrderSelection('valorant', 'avlon', '1-day');
+  const selection = resolveOrderSelection('valorant', 'rage', '1-day');
   assert.ok(selection);
   assert.equal(selection.productId, 'valorant');
   assert.equal(selection.productName, 'Valorant');
-  assert.equal(selection.variantId, 'avlon');
-  assert.equal(selection.variantName, 'Avlon');
+  assert.equal(selection.variantId, 'rage');
+  assert.equal(selection.variantName, 'RAGE');
   assert.equal(selection.offerId, '1-day');
   assert.equal(selection.offerLabel, '1 Day');
-  assert.equal(selection.amountUsd, 9.99);
+  assert.equal(selection.amountUsd, 12);
 
   // Special offer labels and prices
   const arcSelection = resolveOrderSelection('arc-raiders', 'temporary-account', '300-plus-hours');
@@ -33,13 +33,13 @@ test('resolves valid product, variant, and offer from catalog with server author
   const spooferSelection = resolveOrderSelection('spoofers', 'permanent', 'unlimited-use');
   assert.ok(spooferSelection);
   assert.equal(spooferSelection.offerLabel, 'Unlimited Use');
-  assert.equal(spooferSelection.amountUsd, 69.99);
+  assert.equal(spooferSelection.amountUsd, 150);
 });
 
 test('rejects invalid product, variant, or offer selections', () => {
-  assert.equal(resolveOrderSelection('invalid', 'avlon', '1-day'), null);
+  assert.equal(resolveOrderSelection('invalid', 'rage', '1-day'), null);
   assert.equal(resolveOrderSelection('valorant', 'invalid', '1-day'), null);
-  assert.equal(resolveOrderSelection('valorant', 'avlon', 'invalid'), null);
+  assert.equal(resolveOrderSelection('valorant', 'rage', 'invalid'), null);
 });
 
 test('validates crypto payment proof (requires hash, screenshot, or both)', () => {
@@ -125,7 +125,7 @@ test('rejects unsafe or ambiguous gift-card link mappings', () => {
 
 test('provides a denomination-specific G2A destination for every catalog offer', () => {
   const links = createCatalogGiftCardLinks();
-  const expectedDenominations = [3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 20, 22, 23, 25, 26, 27, 28, 30, 35, 40, 42, 45, 50, 55, 60, 70, 80, 100, 160, 200, 250, 400, 500];
+  const expectedDenominations = [4, 5, 6, 7, 8, 10, 12, 15, 20, 23, 25, 28, 30, 35, 40, 45, 50, 55, 60, 65, 70, 80, 90, 100, 125, 150, 200, 250, 300, 350, 450, 500];
 
   assert.deepEqual(links.map((link) => link.denominationUsd), expectedDenominations);
   assert.equal(validateGiftCardLinks(links).valid, true);

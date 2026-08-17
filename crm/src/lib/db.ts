@@ -88,37 +88,44 @@ function normalizeOrder(order: any): RealOrder {
   };
 }
 
-// Initialize database with directory, seed Super Admin, and seed Payment Settings
+// Default in-memory baseline schema
+function createBaselineDatabase(): DatabaseSchema {
+  const salt = bcrypt.genSaltSync(10);
+  const passwordHash = bcrypt.hashSync('Admin123', salt);
+  return {
+    admins: [
+      {
+        id: 'admin_super_01',
+        username: 'LivingLegend',
+        passwordHash,
+        role: 'superadmin',
+        createdAt: new Date().toISOString(),
+      }
+    ],
+    users: [],
+    orders: [],
+    tickets: [],
+    paymentSettings: DEFAULT_PAYMENT_SETTINGS,
+  };
+}
+
+// Initialize database with directory, seed Super Admin, and seed Payment Settings (Serverless / Read-Only Safe)
 export function initializeDatabase(): DatabaseSchema {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(DB_FILE)) {
-    const salt = bcrypt.genSaltSync(10);
-    const passwordHash = bcrypt.hashSync('Admin123', salt);
-
-    const initialDb: DatabaseSchema = {
-      admins: [
-        {
-          id: 'admin_super_01',
-          username: 'LivingLegend',
-          passwordHash,
-          role: 'superadmin',
-          createdAt: new Date().toISOString(),
-        }
-      ],
-      users: [],
-      orders: [],
-      tickets: [],
-      paymentSettings: DEFAULT_PAYMENT_SETTINGS,
-    };
-
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2), 'utf-8');
-    return initialDb;
-  }
-
   try {
+    if (!fs.existsSync(DB_DIR)) {
+      try {
+        fs.mkdirSync(DB_DIR, { recursive: true });
+      } catch {}
+    }
+
+    if (!fs.existsSync(DB_FILE)) {
+      const initialDb = createBaselineDatabase();
+      try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(initialDb, null, 2), 'utf-8');
+      } catch {}
+      return initialDb;
+    }
+
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
     let mutated = false;
@@ -148,20 +155,14 @@ export function initializeDatabase(): DatabaseSchema {
     }
 
     if (mutated) {
-      fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
+      try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(parsed, null, 2), 'utf-8');
+      } catch {}
     }
 
     return parsed;
-  } catch (error) {
-    console.error('Error reading database, creating fresh structure:', error);
-    const initialDb: DatabaseSchema = {
-      admins: [],
-      users: [],
-      orders: [],
-      tickets: [],
-      paymentSettings: DEFAULT_PAYMENT_SETTINGS,
-    };
-    return initialDb;
+  } catch {
+    return createBaselineDatabase();
   }
 }
 

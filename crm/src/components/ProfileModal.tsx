@@ -62,7 +62,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: username.trim(),
-          name: isAdmin ? name.trim() : undefined,
+          name: name.trim(),
           discordHandle: !isAdmin ? discordHandle.trim() : undefined,
           currentPassword: isAdmin ? currentPassword || undefined : undefined,
           newPassword: isAdmin ? newPassword || undefined : undefined,

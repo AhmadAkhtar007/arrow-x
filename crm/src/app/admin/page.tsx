@@ -109,7 +109,7 @@ export default function AdminDashboardPage() {
   const [settingsError, setSettingsError] = useState('');
   const [uploadingQr, setUploadingQr] = useState<string | null>(null);
 
-  // 1. Authenticate on Mount
+  // 1. Authenticate on Mount (Guarded against FOUC)
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -117,17 +117,16 @@ export default function AdminDashboardPage() {
         const data = await res.json();
 
         if (!res.ok || !data.authenticated || (data.user.role !== 'admin' && data.user.role !== 'superadmin')) {
-          router.push('/admin/login');
+          router.replace('/admin/login');
           return;
         }
 
         setCurrentAdmin(data.user);
+        setAuthLoading(false);
         fetchDashboardData();
         fetchPaymentSettings();
       } catch {
-        router.push('/admin/login');
-      } finally {
-        setAuthLoading(false);
+        router.replace('/admin/login');
       }
     };
 
@@ -391,7 +390,7 @@ export default function AdminDashboardPage() {
     setTimeout(() => setCopiedOrderId(null), 2000);
   };
 
-  if (authLoading) {
+  if (authLoading || !currentAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center font-mono text-xs text-blue-400 space-y-3 bg-[#03060c]">
         <div className="text-center space-y-2">

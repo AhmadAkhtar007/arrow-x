@@ -304,7 +304,8 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
   const giftCardUnavailable = paymentMethod === 'GIFT_CARD' && !giftCardLink;
 
   return (
-    <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <>
+      <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       
       {/* Left Column: Order Summary & Customer Authentication State */}
       <div className="lg:col-span-5 space-y-6">
@@ -751,9 +752,9 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
               </span>
               <ArrowRight className="h-4 w-4" />
             </button>
-          )}
-
         </div>
+
+      </div>
 
     </form>
 

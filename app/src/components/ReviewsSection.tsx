@@ -80,14 +80,14 @@ export const ReviewsSection: React.FC = () => {
               <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div 
-                    className="w-7 h-7 rounded-full border flex items-center justify-center font-bold text-xs"
+                    className="w-7 h-7 rounded-full border flex items-center justify-center font-bold text-xs font-mono"
                     style={{ backgroundColor: themeConfig.badgeBg, borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}
                   >
                     {review.avatarLetter}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1">
-                      <span>{review.author}</span>
+                    <div className="text-xs font-bold text-white flex items-center gap-1 font-mono">
+                      <span>@{review.author}</span>
                     </div>
                     <div className="text-[10px] text-zinc-500 font-mono">{review.productName}</div>
                   </div>
@@ -141,14 +141,14 @@ export const ReviewsSection: React.FC = () => {
               <div className="pt-3 border-t border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div 
-                    className="w-7 h-7 rounded-full border flex items-center justify-center font-bold text-xs"
+                    className="w-7 h-7 rounded-full border flex items-center justify-center font-bold text-xs font-mono"
                     style={{ backgroundColor: themeConfig.badgeBg, borderColor: themeConfig.badgeBorder, color: themeConfig.accent }}
                   >
                     {review.avatarLetter}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1">
-                      <span>{review.author}</span>
+                    <div className="text-xs font-bold text-white flex items-center gap-1 font-mono">
+                      <span>@{review.author}</span>
                     </div>
                     <div className="text-[10px] text-zinc-500 font-mono">{review.productName}</div>
                   </div>

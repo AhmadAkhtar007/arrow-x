@@ -15,7 +15,12 @@ import {
   Coins, 
   ArrowRight,
   Sparkles,
-  Info
+  Info,
+  MessageSquare,
+  X,
+  CheckCircle2,
+  Clock,
+  Send
 } from 'lucide-react';
 import type { PaymentMethod, PaymentSettings, ResolvedSelection } from '@arrowx/shared/orders';
 import { findGiftCardPurchaseLink, getRequiredGiftCardDenomination, createCatalogGiftCardLinks, G2A_REWARBLE_PURCHASE_URL } from '@arrowx/shared/orders';
@@ -45,6 +50,59 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
+
+  // Checkout Support Ticket State
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [ticketSubject, setTicketSubject] = useState('');
+  const [ticketEmail, setTicketEmail] = useState(currentUser?.email || '');
+  const [ticketMessage, setTicketMessage] = useState('');
+  const [ticketSubmitting, setTicketSubmitting] = useState(false);
+  const [createdTicket, setCreatedTicket] = useState<any>(null);
+  const [ticketError, setTicketError] = useState('');
+
+  const handleOpenSupportTicket = () => {
+    setTicketSubject(`Pre-Purchase Inquiry: ${selection.productName} (${selection.variantName} - ${selection.offerLabel})`);
+    setTicketEmail(currentUser?.email || '');
+    setTicketMessage('');
+    setTicketError('');
+    setCreatedTicket(null);
+    setShowTicketModal(true);
+  };
+
+  const handleSubmitCheckoutTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ticketEmail.trim() || !ticketSubject.trim() || !ticketMessage.trim()) {
+      setTicketError('Email, subject, and message are required.');
+      return;
+    }
+
+    setTicketSubmitting(true);
+    setTicketError('');
+    try {
+      const res = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerEmail: ticketEmail.trim(),
+          customerName: currentUser?.name || currentUser?.username || ticketEmail.split('@')[0],
+          discordHandle: discordHandle.trim() || undefined,
+          subject: ticketSubject.trim(),
+          initialMessage: ticketMessage.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to submit support ticket.');
+      }
+
+      setCreatedTicket(data.ticket);
+    } catch (err: any) {
+      setTicketError(err.message || 'Could not submit your support ticket.');
+    } finally {
+      setTicketSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     fetch('/api/payment-settings', { cache: 'no-store' })
@@ -271,9 +329,27 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
             </div>
 
             <div className="p-3.5 rounded-2xl bg-black/40 border border-white/5 space-y-1.5 text-xs font-mono">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-zinc-400">Selected Plan:</span>
-                <span className="text-white font-semibold">{selection.offerLabel}</span>
+                <span className="text-white font-semibold flex items-center gap-1.5">
+                  <span>{selection.offerLabel}</span>
+                  {(() => {
+                    const id = selection.offerId.toLowerCase();
+                    const label = selection.offerLabel.toLowerCase();
+                    const badge = 
+                      (id.includes('lifetime') || label.includes('lifetime') || id.includes('unlimited')) ? 'BEST VALUE' :
+                      (id.includes('1-year') || label.includes('year')) ? 'BEST DEAL' :
+                      (id.includes('3-month') || label.includes('3 month')) ? 'BEST VALUE' :
+                      (id.includes('1-month') || label.includes('1 month')) ? 'MOST POPULAR' :
+                      null;
+                    if (!badge) return null;
+                    return (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-[9px] font-mono font-bold text-emerald-400">
+                        {badge}
+                      </span>
+                    );
+                  })()}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Fulfillment:</span>
@@ -325,6 +401,30 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
           <p className="leading-relaxed text-[11px]">
             To protect against fraudulent transactions and chargebacks, our security team verifies crypto on-chain confirmations and gift card codes before issuing product access.
           </p>
+        </div>
+
+        {/* Priority Checkout Support Card */}
+        <div className="p-5 rounded-3xl bg-[#090e0b]/80 border border-emerald-500/20 text-xs space-y-3 font-sans shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-bold text-white font-display">
+              <MessageSquare className="h-4 w-4 text-emerald-400" />
+              <span>Need Help with Checkout?</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-[10px] font-mono text-emerald-400 font-bold border border-emerald-500/30">
+              PRIORITY DESK
+            </span>
+          </div>
+          <p className="leading-relaxed text-[11px] text-zinc-400">
+            Have questions regarding crypto confirmations, gift cards, or PC/hardware compatibility? Open a ticket directly with staff.
+          </p>
+          <button
+            type="button"
+            onClick={handleOpenSupportTicket}
+            className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/35 text-zinc-200 hover:text-emerald-300 font-mono text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer group shadow-sm"
+          >
+            <MessageSquare className="h-3.5 w-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span>Open Support Ticket &rarr;</span>
+          </button>
         </div>
 
       </div>
@@ -655,8 +755,149 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
 
         </div>
 
-      </div>
-
     </form>
+
+    {/* Pre-Purchase Support Ticket Modal Overlay */}
+    {showTicketModal && (
+      <div 
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
+        onClick={() => setShowTicketModal(false)}
+      >
+        <div 
+          className="w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-5 shadow-2xl relative overflow-hidden bg-[#080d0a]/95 border border-emerald-500/30"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Glow backdrop */}
+          <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-[120px] pointer-events-none opacity-20 bg-emerald-500" />
+
+          {/* Modal Header */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+                <MessageSquare className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold font-display text-white">Pre-Purchase Support Desk</h2>
+                <p className="text-xs text-zinc-400 font-mono">
+                  Priority Assistance for active checkout
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowTicketModal(false)}
+              className="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Package Context Pill */}
+          <div className="p-3 rounded-2xl bg-black/50 border border-white/10 flex items-center justify-between text-xs font-mono">
+            <span className="text-zinc-300 font-bold">{selection.productName} ({selection.variantName} - {selection.offerLabel})</span>
+            <span className="text-emerald-400 font-black">${selection.amountUsd.toFixed(2)} USD</span>
+          </div>
+
+          {createdTicket ? (
+            <div className="space-y-5 text-center py-4">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(16,185,129,0.3)]">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base font-bold font-display text-white">Support Ticket Dispatched</h3>
+                <p className="text-xs text-zinc-400 font-mono">
+                  Ticket ID: <span className="text-emerald-400 font-bold">#{createdTicket.id}</span>
+                </p>
+                <p className="text-xs text-zinc-400 max-w-[34ch] mx-auto pt-1 font-sans">
+                  Our staff has received your inquiry and will respond directly to your email.
+                </p>
+              </div>
+              <div className="pt-2 flex justify-center gap-3 font-mono text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowTicketModal(false)}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold font-display uppercase tracking-wider transition-all cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                >
+                  Return to Checkout
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmitCheckoutTicket} className="space-y-4 text-xs font-mono">
+              {ticketError && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
+                  {ticketError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-zinc-400 mb-1">Your Email Address</label>
+                <input
+                  type="email"
+                  value={ticketEmail}
+                  onChange={(e) => setTicketEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1">Your Question or Message</label>
+                <textarea
+                  rows={4}
+                  value={ticketMessage}
+                  onChange={(e) => setTicketMessage(e.target.value)}
+                  placeholder="Describe your inquiry (e.g. crypto confirmation help, gift card redemption, PC compatibility)..."
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-black/60 border border-white/10 text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-500 resize-none font-sans"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTicketModal(false)}
+                  className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white transition-all cursor-pointer font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={ticketSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold font-display uppercase tracking-wider transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer flex items-center gap-2"
+                >
+                  {ticketSubmitting ? (
+                    <>
+                      <Clock className="h-3.5 w-3.5 animate-spin" />
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5" />
+                      <span>Submit Ticket</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
+
+        </div>
+      </div>
+    )}
+  </>
   );
 };

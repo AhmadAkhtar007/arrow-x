@@ -127,6 +127,15 @@ export const ProductPurchaseSelector: React.FC<ProductPurchaseSelectorProps> = (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {currentVariant.offers.map((offer) => {
               const isSelected = offer.id === offerId;
+              const id = offer.id.toLowerCase();
+              const label = offer.label.toLowerCase();
+              const badge = 
+                (id.includes('lifetime') || label.includes('lifetime') || id.includes('unlimited') || label.includes('unlimited')) ? 'BEST VALUE' :
+                (id.includes('1-year') || label.includes('1 year') || label.includes('year')) ? 'BEST DEAL' :
+                (id.includes('3-month') || label.includes('3 month')) ? 'BEST VALUE' :
+                (id.includes('1-month') || label.includes('1 month')) ? 'MOST POPULAR' :
+                null;
+
               return (
                 <button
                   key={offer.id}
@@ -135,16 +144,29 @@ export const ProductPurchaseSelector: React.FC<ProductPurchaseSelectorProps> = (
                   onClick={() => setOfferId(offer.id)}
                   className={`p-3 sm:p-3.5 rounded-2xl border text-left transition-all cursor-pointer space-y-0.5 relative overflow-hidden ${
                     isSelected
-                      ? 'bg-[#0d1612] border-emerald-500 shadow-[0_0_25px_rgba(16,185,129,0.2)] ring-2 ring-emerald-500/60'
-                      : 'bg-[#090e0b] border-white/10 hover:border-white/25 hover:bg-white/[0.02]'
+                      ? 'bg-[#0d1612] border-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.25)] ring-2 ring-emerald-400/70'
+                      : badge
+                        ? 'bg-[#090e0b] border-emerald-500/30 hover:border-emerald-500/60 hover:bg-emerald-500/[0.03]'
+                        : 'bg-[#090e0b] border-white/10 hover:border-white/25 hover:bg-white/[0.02]'
                   }`}
                 >
-                  {isSelected && (
-                    <div className="absolute top-0 right-0 bg-emerald-500 text-black font-mono text-[8px] font-black px-1.5 py-0.5 rounded-bl-md">
+                  {badge && (
+                    <div
+                      className={`absolute top-0 right-0 font-mono font-black px-2 py-0.5 rounded-bl-lg tracking-wider text-[8px] sm:text-[9px] transition-colors ${
+                        isSelected
+                          ? 'bg-emerald-400 text-black shadow-md'
+                          : 'bg-emerald-500/20 text-emerald-400 border-b border-l border-emerald-500/30'
+                      }`}
+                    >
+                      {badge}
+                    </div>
+                  )}
+                  {isSelected && !badge && (
+                    <div className="absolute top-0 right-0 bg-emerald-400 text-black font-mono text-[8px] font-black px-2 py-0.5 rounded-bl-lg tracking-wider shadow-md">
                       SELECTED
                     </div>
                   )}
-                  <div className="text-[10px] font-mono uppercase text-zinc-400 font-medium truncate">
+                  <div className="text-[10px] font-mono uppercase text-zinc-400 font-medium truncate pt-1">
                     {offer.label}
                   </div>
                   <div className="text-xl sm:text-2xl font-black font-display text-white">

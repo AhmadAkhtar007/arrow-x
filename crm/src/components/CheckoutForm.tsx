@@ -300,15 +300,16 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
                 {currentUser.name && <div>Customer: <span className="text-zinc-300">{currentUser.name}</span></div>}
               </div>
             ) : (
-              <div className="space-y-2">
-                <p className="text-amber-400 font-mono text-[11px]">
-                  You are not logged in. Please log in to link your purchase.
+              <div className="space-y-2.5">
+                <p className="text-amber-400 font-mono text-[11px] leading-relaxed">
+                  You are not logged in. Sign in to link this purchase directly to your account.
                 </p>
                 <a
-                  href={`/login?returnUrl=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname + window.location.search : '')}`}
-                  className="inline-block py-2 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs font-bold transition-colors"
+                  href={`/login?returnUrl=${encodeURIComponent(`/checkout?product=${selection.productId}&variant=${selection.variantId}&offer=${selection.offerId}`)}`}
+                  className="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-mono text-xs font-bold transition-all shadow-[0_0_15px_rgba(16,185,129,0.25)] cursor-pointer"
                 >
-                  Log In / Register with OTP
+                  <Lock className="h-3.5 w-3.5" />
+                  <span>Log In / Sign In with Email OTP</span>
                 </a>
               </div>
             )}
@@ -619,26 +620,37 @@ export const CheckoutForm: React.FC<CheckoutFormProps> = ({ selection, currentUs
             </div>
           )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isSubmitting || isUploading || !currentUser || giftCardUnavailable}
-            className={`w-full py-4 px-6 rounded-2xl font-black font-display text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-2xl ${
-              !currentUser || giftCardUnavailable
-                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
-            }`}
-          >
-            <ShieldCheck className="h-5 w-5 fill-current" />
-            <span>
-              {isSubmitting
-                ? 'Submitting Order...'
-                : giftCardUnavailable
-                  ? `No Approved $${requiredGiftCardDenomination} Gift Card Link`
-                  : `Submit Payment for Verification · $${selection.amountUsd.toFixed(2)}`}
-            </span>
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          {/* Submit / Login Button */}
+          {!currentUser ? (
+            <a
+              href={`/login?returnUrl=${encodeURIComponent(`/checkout?product=${selection.productId}&variant=${selection.variantId}&offer=${selection.offerId}`)}`}
+              className="w-full py-4 px-6 rounded-2xl font-black font-display text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+            >
+              <Lock className="h-5 w-5" />
+              <span>Sign In to Complete Purchase · ${selection.amountUsd.toFixed(2)}</span>
+              <ArrowRight className="h-4 w-4" />
+            </a>
+          ) : (
+            <button
+              type="submit"
+              disabled={isSubmitting || isUploading || giftCardUnavailable}
+              className={`w-full py-4 px-6 rounded-2xl font-black font-display text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-2xl ${
+                giftCardUnavailable
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:scale-[1.01] active:scale-[0.99] cursor-pointer'
+              }`}
+            >
+              <ShieldCheck className="h-5 w-5 fill-current" />
+              <span>
+                {isSubmitting
+                  ? 'Submitting Order...'
+                  : giftCardUnavailable
+                    ? `No Approved $${requiredGiftCardDenomination} Gift Card Link`
+                    : `Submit Payment for Verification · $${selection.amountUsd.toFixed(2)}`}
+              </span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          )}
 
         </div>
 

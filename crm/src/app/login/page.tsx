@@ -129,6 +129,12 @@ function CustomerLoginContent() {
 
       {/* Main Title & Subtitle */}
       <div className="text-center space-y-1.5 mb-6 relative z-10">
+        {returnUrl.startsWith('/checkout') && (
+          <div className="mb-3 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[11px] font-mono flex items-center justify-center gap-2 font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Preserving Active Checkout Selection</span>
+          </div>
+        )}
         <h1 className="text-2xl sm:text-[26px] font-black font-display tracking-tight text-white">
           {step === 'email' ? 'Access your license vault' : 'Check your email'}
         </h1>

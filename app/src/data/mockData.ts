@@ -207,21 +207,4 @@ export const reviewsData: Review[] = [
   }
 ];
 
-export const announcementsData: Announcement[] = [
-  {
-    id: 'ann-1',
-    title: 'The Competitive Advantage: Why Top Players Value Peace of Mind Over Raw Speed',
-    date: 'August 12, 2026',
-    category: 'Competitive Edge',
-    readTime: '3 min read',
-    summary: 'Discover how smooth, natural gameplay overlays and reliable protection empower players to dominate high-elo lobbies with total confidence and zero FPS drops.'
-  },
-  {
-    id: 'ann-2',
-    title: 'Zero Downtime Philosophy: What Happens Behind the Scenes When Games Push Big Updates',
-    date: 'August 8, 2026',
-    category: 'Player Safety',
-    readTime: '4 min read',
-    summary: 'An inside look at our automated over-the-air update system that protects your active sessions and eliminates manual reinstall headaches.'
-  }
-];
+export const announcementsData: Announcement[] = [];

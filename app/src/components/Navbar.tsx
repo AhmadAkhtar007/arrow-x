@@ -11,6 +11,12 @@ export const Navbar: React.FC = () => {
   const { themeConfig } = useTheme();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const crmUrl = process.env.NEXT_PUBLIC_CRM_URL || 
+    (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'))
+      ? 'http://localhost:3001'
+      : 'https://vault.arrowx.shop');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +29,25 @@ export const Navbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${crmUrl}/api/auth/me`, {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (data.authenticated) {
+          setCurrentUser(data.user);
+        } else {
+          setCurrentUser(null);
+        }
+      } catch {
+        setCurrentUser(null);
+      }
+    };
+    checkSession();
+  }, [crmUrl]);
 
   const navItems = [
     { href: '/', label: 'Home', active: pathname === '/' },
@@ -103,20 +128,26 @@ export const Navbar: React.FC = () => {
             <span className="hidden sm:inline">Discord</span>
           </a>
 
-          {/* Prominent High-Contrast Customer Sign In Button */}
-          <a
-            href={`${
-              process.env.NEXT_PUBLIC_CRM_URL || 
-              (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'))
-                ? 'http://localhost:3001'
-                : 'https://vault.arrowx.shop')
-            }/login`}
-            className="flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-mono font-bold text-black bg-emerald-400 hover:bg-emerald-300 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 cursor-pointer"
-            title="Customer Dashboard & License Keys"
-          >
-            <User className="h-3.5 w-3.5 stroke-[2.5]" />
-            <span>Sign In</span>
-          </a>
+          {/* Authenticated Customer SSO View */}
+          {currentUser ? (
+            <a
+              href={crmUrl}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-mono font-bold text-emerald-300 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 cursor-pointer"
+              title="Customer Vault & Licenses"
+            >
+              <User className="h-3.5 w-3.5 text-emerald-400 stroke-[2.5]" />
+              <span className="truncate max-w-[120px]">{currentUser.name || currentUser.username}</span>
+            </a>
+          ) : (
+            <a
+              href={`${crmUrl}/login`}
+              className="flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-mono font-bold text-black bg-emerald-400 hover:bg-emerald-300 transition-all shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 cursor-pointer"
+              title="Customer Dashboard & License Keys"
+            >
+              <User className="h-3.5 w-3.5 stroke-[2.5]" />
+              <span>Sign In</span>
+            </a>
+          )}
 
         </div>
       </div>

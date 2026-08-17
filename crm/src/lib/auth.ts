@@ -51,3 +51,28 @@ export async function getCurrentSession(): Promise<TokenPayload | null> {
   if (!token) return null;
   return await verifyToken(token);
 }
+
+// 5. Cross-Subdomain SSO Cookie Configuration
+export function getAuthCookieConfig(maxAge: number = 365 * 24 * 60 * 60) {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax' as const,
+    maxAge,
+    path: '/',
+    domain: isProd ? '.arrowx.shop' : undefined,
+  };
+}
+
+export function getLogoutCookieConfig() {
+  const isProd = process.env.NODE_ENV === 'production';
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax' as const,
+    maxAge: 0,
+    path: '/',
+    domain: isProd ? '.arrowx.shop' : undefined,
+  };
+}

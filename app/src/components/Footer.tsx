@@ -8,6 +8,12 @@ import { useTheme } from '../context/ThemeContext';
 export const Footer: React.FC = () => {
   const { themeConfig } = useTheme();
 
+  const crmUrl =
+    process.env.NEXT_PUBLIC_CRM_URL ||
+    (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1'))
+      ? 'http://localhost:3001'
+      : 'https://vault.arrowx.shop');
+
   return (
     <footer className="border-t border-white/10 bg-[#040705] text-zinc-400 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -41,10 +47,7 @@ export const Footer: React.FC = () => {
                 <Link href="/products" className="hover:text-white transition-colors">Products</Link>
               </li>
               <li>
-                <Link href="/blog" className="hover:text-white transition-colors">Patch Notes & Blog</Link>
-              </li>
-              <li>
-                <Link href="/status" className="hover:text-white transition-colors">Anti-Cheat Status</Link>
+                <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
               </li>
             </ul>
           </div>
@@ -56,27 +59,40 @@ export const Footer: React.FC = () => {
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="https://discord.gg/sMHzvy2QYT" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">24/7 Discord Tickets</a>
+                <a 
+                  href={process.env.NEXT_PUBLIC_DISCORD_URL || "https://discord.gg/sMHzvy2QYT"} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-white transition-colors"
+                >
+                  Discord Server
+                </a>
               </li>
               <li>
-                <Link href="/status" className="hover:text-white transition-colors">Live Status NOC</Link>
-              </li>
-              <li>
-                <a href="https://discord.gg/sMHzvy2QYT" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Discord Community</a>
+                <a 
+                  href={`${crmUrl}/login`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="hover:text-white transition-colors"
+                >
+                  Customer Portal
+                </a>
               </li>
             </ul>
           </div>
 
-          {/* Col 4: Legal & Security */}
+          {/* Col 4: Legal */}
           <div>
             <h4 className="text-xs font-semibold uppercase font-mono tracking-widest mb-3" style={{ color: themeConfig.accent }}>
-              Security
+              Legal
             </h4>
             <ul className="space-y-2 text-xs">
-              <li><Link href="/blog" className="hover:text-white transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/blog" className="hover:text-white transition-colors">Terms of Service</Link></li>
-              <li><Link href="/status" className="hover:text-white transition-colors">Refund Assurance</Link></li>
-              <li><Link href="/status" className="hover:text-white transition-colors">Encrypted Gateways</Link></li>
+              <li>
+                <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              </li>
             </ul>
           </div>
 

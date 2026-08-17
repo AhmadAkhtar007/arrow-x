@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../../../lib/supabase/server';
 import { verifyCustomerOtp, upsertOAuthCustomer } from '../../../../../lib/db';
-import { signToken, AUTH_COOKIE_NAME } from '../../../../../lib/auth';
+import { signToken, AUTH_COOKIE_NAME, getAuthCookieConfig } from '../../../../../lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,13 +64,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set(AUTH_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 365 * 24 * 60 * 60,
-      path: '/',
-    });
+    response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieConfig(365 * 24 * 60 * 60));
 
     return response;
   } catch (error: any) {

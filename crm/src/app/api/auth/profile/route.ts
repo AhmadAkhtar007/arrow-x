@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession, verifyPassword, signToken, AUTH_COOKIE_NAME } from '../../../../lib/auth';
+import { getCurrentSession, verifyPassword, signToken, AUTH_COOKIE_NAME, getAuthCookieConfig } from '../../../../lib/auth';
 import { 
   getAdminByUsername, 
   getUserByEmail, 
@@ -73,12 +73,7 @@ export async function PUT(req: NextRequest) {
         },
       });
 
-      response.cookies.set(AUTH_COOKIE_NAME, newToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      });
+      response.cookies.set(AUTH_COOKIE_NAME, newToken, getAuthCookieConfig(4 * 60 * 60));
 
       return response;
     }
@@ -122,13 +117,7 @@ export async function PUT(req: NextRequest) {
       },
     });
 
-    response.cookies.set(AUTH_COOKIE_NAME, newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 365 * 24 * 60 * 60,
-      path: '/',
-    });
+    response.cookies.set(AUTH_COOKIE_NAME, newToken, getAuthCookieConfig(365 * 24 * 60 * 60));
 
     return response;
   } catch (error: any) {

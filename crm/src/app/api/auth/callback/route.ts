@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
-import { AUTH_COOKIE_NAME, signToken } from '../../../../lib/auth';
+import { AUTH_COOKIE_NAME, signToken, getAuthCookieConfig } from '../../../../lib/auth';
 import { upsertOAuthCustomer } from '../../../../lib/db';
 import { sanitizeReturnUrl } from '../../../../lib/customerAuth';
 
@@ -85,13 +85,7 @@ export async function GET(req: NextRequest) {
     const successRedirect = new URL(returnUrl, req.nextUrl.origin);
     const response = NextResponse.redirect(successRedirect);
 
-    response.cookies.set(AUTH_COOKIE_NAME, jwt, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 365 * 24 * 60 * 60,
-      path: '/',
-    });
+    response.cookies.set(AUTH_COOKIE_NAME, jwt, getAuthCookieConfig(365 * 24 * 60 * 60));
 
     return response;
   } catch (err: any) {

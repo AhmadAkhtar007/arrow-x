@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminByUsername } from '../../../../lib/db';
-import { verifyPassword, signToken, AUTH_COOKIE_NAME } from '../../../../lib/auth';
+import { verifyPassword, signToken, AUTH_COOKIE_NAME, getAuthCookieConfig } from '../../../../lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,13 +37,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Ephemeral Session Cookie (no maxAge) -> requires password on every browser session
-    response.cookies.set(AUTH_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
+    response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieConfig(12 * 60 * 60));
 
     return response;
   } catch (error: any) {

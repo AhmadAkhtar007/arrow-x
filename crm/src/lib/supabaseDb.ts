@@ -62,6 +62,32 @@ export async function getSupabaseUserByEmail(email: string): Promise<UserAccount
   }
 }
 
+export async function getSupabaseUserById(id: string): Promise<UserAccount | null> {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', id.trim())
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      username: data.username,
+      role: 'customer' as const,
+      discordHandle: data.discord_handle || undefined,
+      hwid: data.hwid || undefined,
+      otpCode: data.otp_code || undefined,
+      otpExpiresAt: data.otp_expires_at || undefined,
+      createdAt: data.created_at,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function upsertSupabaseUser(user: UserAccount): Promise<boolean> {
   try {
     const { error } = await supabase.from('users').upsert({
@@ -190,6 +216,61 @@ export async function upsertSupabaseOAuthCustomer(data: {
 
   await upsertSupabaseUser(newUser);
   return newUser;
+}
+
+export async function updateSupabaseCustomerProfile(
+  userId: string,
+  updates: { name?: string; username?: string; discordHandle?: string; hwid?: string }
+): Promise<UserAccount | null> {
+  try {
+    const payload: any = {};
+    if (updates.name !== undefined) payload.name = updates.name.trim();
+    if (updates.username !== undefined) payload.username = updates.username.trim();
+    if (updates.discordHandle !== undefined) payload.discord_handle = updates.discordHandle.trim() || null;
+    if (updates.hwid !== undefined) payload.hwid = updates.hwid.trim() || null;
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(payload)
+      .eq('id', userId)
+      .select()
+      .maybeSingle();
+
+    if (error || !data) {
+      // Try lookup by email if userId didn't match (for OAuth users)
+      const { data: byEmail, error: emailError } = await supabase
+        .from('users')
+        .update(payload)
+        .ilike('email', userId)
+        .select()
+        .maybeSingle();
+
+      if (emailError || !byEmail) return null;
+      return {
+        id: byEmail.id,
+        name: byEmail.name,
+        email: byEmail.email,
+        username: byEmail.username,
+        role: 'customer',
+        discordHandle: byEmail.discord_handle || undefined,
+        hwid: byEmail.hwid || undefined,
+        createdAt: byEmail.created_at,
+      };
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      username: data.username,
+      role: 'customer',
+      discordHandle: data.discord_handle || undefined,
+      hwid: data.hwid || undefined,
+      createdAt: data.created_at,
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ====================================================================

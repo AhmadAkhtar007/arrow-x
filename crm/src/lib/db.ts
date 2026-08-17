@@ -19,9 +19,11 @@ import {
   upsertSupabaseOrder, 
   getSupabaseUsers, 
   getSupabaseUserByEmail, 
+  getSupabaseUserById,
   generateSupabaseOtp, 
   verifySupabaseOtp, 
-  upsertSupabaseOAuthCustomer 
+  upsertSupabaseOAuthCustomer,
+  updateSupabaseCustomerProfile
 } from './supabaseDb';
 
 interface DatabaseSchema {
@@ -282,6 +284,8 @@ export async function getUserByEmail(email: string): Promise<UserAccount | null>
 }
 
 export async function getUserById(id: string): Promise<UserAccount | null> {
+  const supabaseUser = await getSupabaseUserById(id);
+  if (supabaseUser) return supabaseUser;
   const db = initializeDatabase();
   return db.users.find((u) => u.id === id) || null;
 }
@@ -432,6 +436,13 @@ export async function updateCustomerProfile(
   userId: string, 
   updates: { name?: string; username?: string; discordHandle?: string; hwid?: string }
 ): Promise<UserAccount | null> {
+  try {
+    const supabaseUpdated = await updateSupabaseCustomerProfile(userId, updates);
+    if (supabaseUpdated) return supabaseUpdated;
+  } catch (err) {
+    console.warn('[DB] Supabase profile update error, falling back to local:', err);
+  }
+
   const db = initializeDatabase();
   const index = db.users.findIndex((u) => u.id === userId);
   if (index === -1) return null;

@@ -3,6 +3,7 @@ import { getCurrentSession, verifyPassword, signToken, AUTH_COOKIE_NAME } from '
 import { 
   getAdminByUsername, 
   getUserByEmail, 
+  getUserById,
   updateAdminProfile, 
   updateCustomerProfile, 
   initializeDatabase 
@@ -83,7 +84,7 @@ export async function PUT(req: NextRequest) {
     }
 
     // 2. Handle Customer Profile Update (Name & Discord Handle)
-    const user = db.users.find((u) => u.id === session.id);
+    const user = (await getUserById(session.id)) || (session.email ? await getUserByEmail(session.email) : null);
     if (!user) {
       return NextResponse.json({ error: 'User account not found.' }, { status: 404 });
     }

@@ -245,10 +245,9 @@ BEGIN
          )
          ELSE NULL END
   )
-  -- Resolve conflicts based on immutable ID, not mutable email
-  ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    email = EXCLUDED.email,
+  -- Seamlessly link accounts across Email OTP, Google OAuth, and Discord
+  ON CONFLICT (email) DO UPDATE SET
+    name = COALESCE(NULLIF(public.users.name, ''), EXCLUDED.name),
     discord_handle = COALESCE(EXCLUDED.discord_handle, public.users.discord_handle);
 
   RETURN NEW;

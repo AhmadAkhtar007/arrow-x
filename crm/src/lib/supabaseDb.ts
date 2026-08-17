@@ -518,33 +518,45 @@ export async function getSupabaseAdmins(): Promise<AdminAccount[]> {
       .select('*')
       .order('created_at', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      // Auto-ensure all 4 superadmins exist
-      const bcrypt = (await import('bcryptjs')).default;
-      const initialAdmins: AdminAccount[] = [];
-      for (const a of DEFAULT_SUPERADMINS) {
+    const currentAdmins: any[] = data || [];
+    
+    // Auto-ensure all 4 default superadmins exist in Supabase
+    const bcrypt = (await import('bcryptjs')).default;
+    for (const defaultAdmin of DEFAULT_SUPERADMINS) {
+      const exists = currentAdmins.some(
+        (a: any) => a.username.toLowerCase() === defaultAdmin.username.toLowerCase()
+      );
+      if (!exists) {
         const passwordHash = await bcrypt.hash('Admin123', 10);
-        const admin: AdminAccount = {
-          id: a.id,
-          username: a.username,
-          passwordHash,
-          role: a.role,
-          createdAt: new Date().toISOString(),
-        };
-        await createSupabaseAdmin(admin).catch(() => {});
-        initialAdmins.push(admin);
+        try {
+          const inserted = await createSupabaseAdmin({
+            id: defaultAdmin.id,
+            username: defaultAdmin.username,
+            passwordHash,
+            role: defaultAdmin.role,
+          });
+          currentAdmins.push({
+            id: inserted.id,
+            username: inserted.username,
+            password_hash: inserted.passwordHash,
+            role: inserted.role,
+            created_at: inserted.createdAt,
+          });
+        } catch (e) {
+          console.warn('Could not auto-insert admin account into Supabase:', defaultAdmin.username, e);
+        }
       }
-      return initialAdmins;
     }
 
-    return data.map((a: any) => ({
+    return currentAdmins.map((a: any) => ({
       id: a.id,
       username: a.username,
       passwordHash: a.password_hash,
       role: a.role as 'admin' | 'superadmin',
       createdAt: a.created_at,
     }));
-  } catch {
+  } catch (err) {
+    console.error('getSupabaseAdmins error:', err);
     return [];
   }
 }

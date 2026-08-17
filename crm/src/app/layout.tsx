@@ -46,14 +46,22 @@ export default function RootLayout({
           {children}
         </main>
 
-        {/* Clean Footer */}
+        {/* Clean Footer with Official Trust Links */}
         <footer className="border-t border-white/5 py-8 text-center text-xs font-mono text-zinc-500 space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-zinc-400 font-bold">ArrowX Secure Operations</span>
+          <div className="flex items-center justify-center gap-3">
+            <a href="https://arrowx.shop" className="text-zinc-400 font-bold hover:text-white transition-colors">
+              ArrowX Official Store
+            </a>
             <span>·</span>
-            <span className="text-zinc-500">app.arrowx.shop</span>
+            <a href="https://arrowx.shop/privacy" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+              Privacy Policy
+            </a>
+            <span>·</span>
+            <a href="https://arrowx.shop/terms" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+              Terms of Service
+            </a>
           </div>
-          <div>All Transactions & License Keys Encrypted with AES-256</div>
+          <div>All Customer Sessions & License Deliveries Encrypted via TLS 1.3</div>
         </footer>
 
       </body>
